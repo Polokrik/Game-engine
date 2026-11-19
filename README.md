@@ -8,8 +8,8 @@ Moteur de création de jeux pédagogiques en HTML, pour simplifier le travail de
 
 ## Démarrer
 
-```bash
-python3 atelier/construire.py
-```
+**Ouvrir `atelier/atelier-jeux.html` dans un navigateur.** Aucun serveur ni installation n'est nécessaire.
 
-Ouvrir ensuite `atelier/dist/atelier-jeux.html` dans un navigateur. Aucun serveur n'est nécessaire.
+Cette version n'embarque pas de sons (droits d'auteur). Pour les avoir : déposer les fichiers audio dans `atelier/sons/` (noms listés dans `atelier/sons/packs.json`), puis lancer `python3 atelier/construire.py` et ouvrir `atelier/dist/atelier-jeux-avec-sons.html`.
+
+> N'ouvrez pas `atelier/atelier.src.html` : c'est le modèle de construction, il affiche un message d'avertissement.

@@ -70,12 +70,13 @@ Atelier (éditeur)  --écrit-->  Édition (.json)  --lue par-->  Lecteur du jeu
 
 | Chemin | Rôle |
 |---|---|
-| `atelier/atelier.src.html` | Modèle de l'atelier : éditeur, lecteur du quiz, styles. Sans audio. |
+| `atelier/atelier-jeux.html` | **Le fichier à ouvrir** : page complète sans sons, générée et versionnée |
+| `atelier/atelier.src.html` | Modèle de construction : éditeur, lecteur du quiz, styles. Ne s'ouvre pas seul |
 | `atelier/src/commun.js` | Briques partagées : thème visuel, création d'éléments, moteur de sons |
 | `atelier/src/champion.js` | Lecteur du Champion solo et sa feuille de style |
 | `atelier/sons/` | Fichiers audio (non versionnés) et `packs.json` (correspondance événement, fichier) |
-| `atelier/construire.py` | Assemble le modèle, `src/` et `sons/` dans `atelier/dist/` |
-| `atelier/dist/` | Fichiers générés (non versionnés) : `atelier-jeux.html` (page complète) et `atelier-artefact.html` |
+| `atelier/construire.py` | Assemble le modèle, `src/` et `sons/` |
+| `atelier/dist/` | Fichiers générés avec les sons (non versionnés) : `atelier-jeux-avec-sons.html` et `atelier-artefact.html` |
 | `assistant/` | Documentation de l'assistant IA : prompt système, connaissances, gabarits, jeu d'évaluation |
 | `docs/` | Ce document et la recherche |
 

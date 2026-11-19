@@ -24,6 +24,7 @@
   --alerte:#F0B36A; --alerte-pale:#3A2A14; --danger:#FF8A80; --ok:#6BD49B; color-scheme:dark;
 }
 *{box-sizing:border-box}
+[hidden]{display:none!important}
 body{background:var(--fond);color:var(--encre);font-family:var(--texte);font-size:15px;line-height:1.5}
 .page{max-width:1440px;margin:0 auto;padding-block:20px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:20px}
 h1,h2,h3{font-family:var(--titre);margin:0;text-wrap:balance;line-height:1.15}
@@ -400,6 +401,10 @@ var SONS_QPUC = {};
 </script>
 <script>
 "use strict";
+if (typeof CHAMPION_CSS === "undefined" || typeof mountChampion === "undefined") {
+  document.body.innerHTML = '<div style="max-width:640px;margin:48px auto;padding:0 16px;font:16px/1.5 system-ui,sans-serif"><h1>Ce fichier est un modèle</h1><p>Il ne contient pas le code des jeux. Ouvrez plutôt <strong>atelier/atelier-jeux.html</strong>. S\'il est absent, lancez <code>python3 atelier/construire.py</code>.</p></div>';
+  throw new Error("Modèle ouvert directement : ouvrir atelier/atelier-jeux.html");
+}
 document.documentElement.lang = "fr";
 
 /* =====================================================================

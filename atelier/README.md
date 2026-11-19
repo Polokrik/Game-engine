@@ -11,21 +11,22 @@ Deux jeux : **Quiz à paliers** et **Champion solo** (Sprint, La série, Trouve 
 ## Organisation
 | Chemin | Rôle |
 |---|---|
-| `atelier.src.html` | Modèle de l'atelier (éditeur, lecteur du quiz, styles). Sans audio. |
+| `atelier-jeux.html` | **Le fichier à ouvrir.** Page complète, sans sons, générée et versionnée. Ne pas la modifier à la main |
+| `atelier.src.html` | Modèle de construction (éditeur, lecteur du quiz, styles). Ne s'ouvre pas seul : il affiche un message |
 | `src/commun.js` | Briques partagées : thème visuel, création d'éléments, moteur de sons |
 | `src/champion.js` | Lecteur du Champion solo et sa feuille de style |
 | `sons/packs.json` | Correspondance événement, fichier audio. Les fichiers eux-mêmes ne sont pas versionnés (droits d'auteur) : sans eux, l'atelier fonctionne sans pack de sons par défaut |
 | `construire.py` | Assemble le modèle, `src/` et `sons/` dans `dist/` |
-| `dist/` | Fichiers générés, non versionnés |
+| `dist/` | Fichiers générés avec les sons, non versionnés : `atelier-jeux-avec-sons.html` et `atelier-artefact.html` |
 | `tests/e2e-brouillons/` | Scripts de test de navigateur (Playwright) écrits pendant le développement, à nettoyer |
 
 ## Construire
 ```bash
 python3 atelier/construire.py
 ```
-Produit `dist/atelier-jeux.html` (page complète) et `dist/atelier-artefact.html` (fragment sans en-tête, tel que publié comme artefact Claude). `ffprobe` sert à lire la durée des sons, s'ils sont présents.
+Produit toujours `atelier-jeux.html` (sans sons, à versionner). Si des fichiers audio sont présents dans `sons/`, produit aussi `dist/atelier-jeux-avec-sons.html` et `dist/atelier-artefact.html` (fragment sans en-tête, tel que publié comme artefact Claude). `ffprobe` sert à lire la durée des sons.
 
-Après toute modification dans `src/`, `sons/` ou `atelier.src.html`, relancer la commande.
+Après toute modification dans `src/` ou `atelier.src.html`, relancer la commande **et versionner le nouveau `atelier-jeux.html`**.
 
 ## À savoir
 - Un jeu exporté recopie le code de son lecteur : il fonctionne sans l'atelier, mais ne se met pas à jour tout seul.
