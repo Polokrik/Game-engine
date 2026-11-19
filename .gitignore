@@ -1,0 +1,10 @@
+# fichiers générés
+atelier/dist/
+# sons : extraits d'émissions, non versionnés (droits d'auteur). packs.json documente la correspondance.
+atelier/sons/*.mp3
+atelier/sons/*.ogg
+atelier/sons/*.wav
+atelier/sons/*.m4a
+node_modules/
+__pycache__/
+*.pyc

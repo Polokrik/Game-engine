@@ -1,0 +1,2076 @@
+<title>Atelier Quiz à paliers</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Instrument+Sans:wght@400;500;600&display=swap">
+<style>
+/* Mise en page : établi à deux volets. À gauche les réglages (3 onglets), à droite le vrai jeu, toujours visible. */
+:root{
+  --fond:#F1F4F6; --surface:#FFFFFF; --creux:#E8EDF1; --encre:#15212B; --doux:#566573; --trait:#D5DDE4;
+  --accent:#0B6B74; --sur-accent:#FFFFFF; --accent-pale:#DDF0F1;
+  --alerte:#A6540A; --alerte-pale:#FBEBD5; --danger:#B3261E; --ok:#1B7F4B;
+  --titre:"Bricolage Grotesque","Trebuchet MS","Segoe UI",sans-serif;
+  --texte:"Instrument Sans",system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+  --r:10px;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --fond:#0F151A; --surface:#182129; --creux:#212C36; --encre:#E7EDF1; --doux:#9CABB8; --trait:#2D3A46;
+    --accent:#56C4CE; --sur-accent:#05262A; --accent-pale:#143A40;
+    --alerte:#F0B36A; --alerte-pale:#3A2A14; --danger:#FF8A80; --ok:#6BD49B; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --fond:#0F151A; --surface:#182129; --creux:#212C36; --encre:#E7EDF1; --doux:#9CABB8; --trait:#2D3A46;
+  --accent:#56C4CE; --sur-accent:#05262A; --accent-pale:#143A40;
+  --alerte:#F0B36A; --alerte-pale:#3A2A14; --danger:#FF8A80; --ok:#6BD49B; color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--fond);color:var(--encre);font-family:var(--texte);font-size:15px;line-height:1.5}
+.page{max-width:1440px;margin:0 auto;padding-block:20px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:20px}
+h1,h2,h3{font-family:var(--titre);margin:0;text-wrap:balance;line-height:1.15}
+h1{font-size:26px;font-weight:700;letter-spacing:-.01em}
+h2{font-size:18px;font-weight:700}
+h3{font-size:15px;font-weight:700}
+p{margin:0}
+.aide{color:var(--doux);font-size:13.5px;max-width:65ch}
+
+/* Barre du haut */
+.barre{display:flex;flex-wrap:wrap;align-items:center;gap:12px 20px}
+.barre .nom{display:flex;flex-direction:column;gap:2px;min-width:0;flex:1 1 260px}
+.barre .edition-nom{color:var(--doux);font-size:14px;display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.badge{font-size:12px;font-weight:600;padding:2px 8px;border-radius:99px;background:var(--alerte-pale);color:var(--alerte)}
+.actions{display:flex;flex-wrap:wrap;gap:8px}
+
+button,.bouton{font:inherit;font-weight:600;font-size:14px;border:1px solid var(--trait);background:var(--surface);color:var(--encre);padding:8px 14px;border-radius:8px;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+button:hover,.bouton:hover{border-color:var(--doux)}
+button.principal{background:var(--accent);border-color:var(--accent);color:var(--sur-accent)}
+button.principal:hover{filter:brightness(1.08)}
+button.discret{border-color:transparent;background:transparent;color:var(--doux);padding:6px 8px}
+button.discret:hover{color:var(--encre);background:var(--creux)}
+button.danger{color:var(--danger)}
+button:disabled{opacity:.45;cursor:not-allowed}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+input[type=file].cache{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
+
+/* Établi */
+.atelier{display:grid;grid-template-columns:minmax(0,1fr);gap:20px;align-items:start}
+@media (min-width:1080px){.atelier{grid-template-columns:minmax(0,5fr) minmax(0,6fr)}}
+.volet{min-width:0;display:flex;flex-direction:column;gap:14px}
+.onglets{display:flex;gap:4px;border-bottom:1px solid var(--trait);overflow-x:auto}
+.onglets button{border:0;border-bottom:3px solid transparent;border-radius:0;background:transparent;color:var(--doux);padding:10px 12px;white-space:nowrap}
+.onglets button[aria-selected=true]{color:var(--encre);border-bottom-color:var(--accent)}
+.onglets .compte{font-weight:500;color:var(--doux)}
+.panneau{display:flex;flex-direction:column;gap:18px}
+.bloc{background:var(--surface);border:1px solid var(--trait);border-radius:var(--r);padding:16px;display:flex;flex-direction:column;gap:14px}
+.grille{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px}
+.champ{display:flex;flex-direction:column;gap:5px;min-width:0}
+.champ>span,.legende{font-size:13px;font-weight:600}
+input[type=text],input[type=number],textarea,select{font:inherit;color:var(--encre);background:var(--surface);border:1px solid var(--trait);border-radius:7px;padding:8px 10px;width:100%;min-width:0}
+textarea{resize:vertical;min-height:62px}
+input[type=color]{width:100%;height:38px;padding:2px;border:1px solid var(--trait);border-radius:7px;background:var(--surface);cursor:pointer}
+input[type=range]{width:100%;accent-color:var(--accent)}
+.coche{display:flex;gap:8px;align-items:flex-start}
+.coche input{margin-top:4px;accent-color:var(--accent)}
+.rangee{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.palettes button{padding:6px 10px 6px 6px}
+.pastilles{display:inline-flex;border-radius:6px;overflow:hidden;border:1px solid var(--trait)}
+.pastilles i{width:14px;height:20px;display:block}
+.avis{background:var(--alerte-pale);color:var(--alerte);border-radius:8px;padding:10px 12px;font-size:13.5px}
+.avis ul{margin:6px 0 0;padding-left:18px}
+.logo-apercu{max-height:72px;max-width:240px;border-radius:4px;background:var(--creux)}
+.coul-liste{display:flex;flex-direction:column;gap:8px}
+.coul{display:grid;grid-template-columns:minmax(64px,100px) 56px minmax(0,1fr);gap:10px;align-items:center}
+.coul input[type=color]{height:36px}
+input.hex{font-family:ui-monospace,"Cascadia Mono",Consolas,monospace;font-size:15px;font-weight:600;letter-spacing:.04em;text-transform:uppercase}
+.marque{display:flex;flex-direction:column;gap:10px;border-top:1px solid var(--trait);padding-top:14px}
+.pal{display:inline-flex;align-items:stretch}
+.pal .appliquer{border-top-right-radius:0;border-bottom-right-radius:0;padding:6px 10px 6px 6px}
+.pal .sup{border-top-left-radius:0;border-bottom-left-radius:0;border-left:0;padding:6px 9px;color:var(--doux)}
+.pal .sup:hover{color:var(--danger)}
+.son-nom{font-size:13.5px;color:var(--doux);overflow-wrap:anywhere}
+#liste-sons{display:flex;flex-direction:column;gap:14px}
+.type-jeu select{width:auto}
+.trouve-zone{display:flex;flex-direction:column;gap:12px}
+#liste-trouve{display:flex;flex-direction:column;gap:8px}
+
+/* Questions */
+.q{background:var(--surface);border:1px solid var(--trait);border-radius:var(--r)}
+.q>summary{list-style:none;cursor:pointer;display:flex;gap:10px;align-items:center;padding:11px 14px}
+.q>summary::-webkit-details-marker{display:none}
+.q-n{font-family:var(--titre);font-weight:700;color:var(--accent);font-variant-numeric:tabular-nums;flex:none;min-width:2.6em}
+.q-titre{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.q-etat{flex:none;font-size:12px;font-weight:600;color:var(--alerte);background:var(--alerte-pale);padding:2px 8px;border-radius:99px}
+.q[open]>summary{border-bottom:1px solid var(--trait)}
+.q-corps{padding:14px;display:flex;flex-direction:column;gap:12px}
+.reponses{border:0;padding:0;margin:0;display:flex;flex-direction:column;gap:6px;min-width:0}
+.reponse{display:flex;gap:8px;align-items:center}
+.reponse input[type=radio]{accent-color:var(--accent);width:18px;height:18px;flex:none}
+.reponse b{width:1.1em;flex:none;color:var(--doux)}
+#liste-questions{display:flex;flex-direction:column;gap:8px}
+
+/* Échelle (onglet règles) */
+.echelle{display:flex;flex-wrap:wrap;gap:6px;list-style:none;margin:0;padding:0}
+.echelle li{font-variant-numeric:tabular-nums;font-size:13px;padding:4px 9px;border-radius:6px;background:var(--creux)}
+.echelle li.surete{background:var(--accent-pale);color:var(--accent);font-weight:600}
+
+/* Aperçu */
+.apercu{position:sticky;top:calc(env(safe-area-inset-top,0px) + 12px)}
+.scene{height:min(700px,calc(100dvh - 150px));min-height:520px;border-radius:var(--r);overflow:hidden;border:1px solid var(--trait);background:var(--creux)}
+@media (max-width:1079px){.apercu{position:static}.scene{height:640px}}
+.apercu-tete{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;justify-content:space-between}
+.apercu-tete select{width:auto}
+
+#toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 20px);background:var(--encre);color:var(--fond);padding:10px 16px;border-radius:8px;font-weight:500;max-width:min(92vw,560px);z-index:20;box-shadow:0 6px 24px rgba(0,0,0,.25)}
+</style>
+
+<div class="page">
+  <header class="barre">
+    <div class="nom">
+      <h1>Atelier de jeux</h1>
+      <div class="edition-nom"><span id="nom-edition"></span><span class="badge" id="badge-exemple" hidden>Édition d'exemple</span></div>
+    </div>
+    <div class="actions">
+      <label class="rangee type-jeu"><span class="legende">Type de jeu</span>
+        <select id="f-jeu" data-c="jeu"><option value="quiz">Quiz à paliers</option><option value="champion">Champion solo</option></select>
+      </label>
+      <button type="button" class="discret" id="btn-nouveau">Nouvelle édition</button>
+      <button type="button" id="btn-ouvrir">Ouvrir une édition</button>
+      <button type="button" id="btn-enregistrer">Enregistrer l'édition</button>
+      <button type="button" class="principal" id="btn-exporter">Exporter le jeu (.html)</button>
+      <input type="file" class="cache" id="fichier-edition" accept=".json,application/json">
+    </div>
+  </header>
+
+  <main class="atelier">
+    <section class="volet" aria-label="Réglages">
+      <div class="onglets" role="tablist">
+        <button type="button" role="tab" id="tab-identite" data-onglet="identite">Identité visuelle</button>
+        <button type="button" role="tab" id="tab-questions" data-onglet="questions">Questions <span class="compte" id="compte-questions"></span></button>
+        <button type="button" role="tab" id="tab-regles" data-onglet="regles">Règles et gains</button>
+        <button type="button" role="tab" id="tab-sons" data-onglet="sons">Sons</button>
+        <button type="button" role="tab" id="tab-apercu" data-onglet="apercu">Aperçu</button>
+      </div>
+
+      <!-- IDENTITÉ -->
+      <div class="panneau" id="p-identite" role="tabpanel" aria-labelledby="tab-identite">
+        <div class="bloc">
+          <h2>Textes</h2>
+          <label class="champ"><span>Titre du jeu</span><input type="text" id="f-titre" data-c="meta.titre" maxlength="80"></label>
+          <label class="champ"><span>Phrase d'accroche</span><input type="text" id="f-soustitre" data-c="meta.sousTitre" maxlength="160"></label>
+          <label class="champ"><span>Message de fin de partie</span><textarea id="f-fin" data-c="meta.messageFin" rows="2"></textarea></label>
+        </div>
+        <div class="bloc">
+          <h2>Couleurs</h2>
+          <div class="rangee palettes" id="palettes"></div>
+          <p class="aide">Collez le code hexadécimal de votre charte (avec ou sans #), ou choisissez la couleur avec le sélecteur.</p>
+          <div class="coul-liste">
+            <div class="coul"><label class="legende" for="h-fond">Fond</label><input type="color" id="f-fond" data-c="theme.fond" aria-label="Fond, sélecteur de couleur"><input type="text" class="hex" id="h-fond" data-hex="theme.fond" maxlength="7" spellcheck="false" autocomplete="off" placeholder="#RRGGBB"></div>
+            <div class="coul"><label class="legende" for="h-carte">Cartes</label><input type="color" id="f-carte" data-c="theme.carte" aria-label="Cartes, sélecteur de couleur"><input type="text" class="hex" id="h-carte" data-hex="theme.carte" maxlength="7" spellcheck="false" autocomplete="off" placeholder="#RRGGBB"></div>
+            <div class="coul"><label class="legende" for="h-texte">Texte</label><input type="color" id="f-texte" data-c="theme.texte" aria-label="Texte, sélecteur de couleur"><input type="text" class="hex" id="h-texte" data-hex="theme.texte" maxlength="7" spellcheck="false" autocomplete="off" placeholder="#RRGGBB"></div>
+            <div class="coul"><label class="legende" for="h-accent">Accent</label><input type="color" id="f-accent" data-c="theme.accent" aria-label="Accent, sélecteur de couleur"><input type="text" class="hex" id="h-accent" data-hex="theme.accent" maxlength="7" spellcheck="false" autocomplete="off" placeholder="#RRGGBB"></div>
+          </div>
+          <div class="avis" id="avis-contraste" hidden></div>
+          <div class="marque">
+            <h3>Palettes de marque</h3>
+            <div class="rangee" id="palettes-marque"></div>
+            <p class="aide" id="marque-vide">Aucune palette enregistrée. Réglez les quatre couleurs ci-dessus, donnez-leur un nom et enregistrez-les pour les réutiliser dans vos prochaines éditions.</p>
+            <div class="rangee">
+              <input type="text" id="f-nom-palette" placeholder="Nom, par exemple Charte Acme" maxlength="40" aria-label="Nom de la palette" style="flex:1 1 180px;width:auto">
+              <button type="button" id="btn-palette-sauver">Enregistrer ces couleurs</button>
+            </div>
+            <p class="aide">Les palettes restent dans ce navigateur. Elles sont aussi ajoutées aux fichiers d'édition (.json) que vous enregistrez : en rouvrant l'un d'eux ailleurs, vous les retrouvez.</p>
+          </div>
+        </div>
+        <div class="bloc">
+          <h2>Style</h2>
+          <div class="grille">
+            <label class="champ"><span>Police</span>
+              <select id="f-police" data-c="theme.police">
+                <optgroup label="Polices Microsoft Office">
+                  <option value="calibri">Calibri</option>
+                  <option value="centurygothic">Century Gothic</option>
+                  <option value="arial">Arial</option>
+                  <option value="verdana">Verdana</option>
+                  <option value="tahoma">Tahoma</option>
+                  <option value="trebuchet">Trebuchet MS</option>
+                  <option value="segoe">Segoe UI</option>
+                  <option value="cambria">Cambria</option>
+                  <option value="georgia">Georgia</option>
+                  <option value="garamond">Garamond</option>
+                  <option value="times">Times New Roman</option>
+                  <option value="couriernew">Courier New</option>
+                </optgroup>
+                <optgroup label="Génériques">
+                  <option value="sans">Système, sans empattement</option>
+                  <option value="arrondie">Arrondie</option>
+                  <option value="serif">À empattements</option>
+                  <option value="mono">Machine à écrire</option>
+                </optgroup>
+                <optgroup label="Autre">
+                  <option value="perso">Autre police, nom à saisir</option>
+                </optgroup>
+              </select>
+            </label>
+            <label class="champ"><span>Arrondi des angles</span><input type="range" id="f-arrondi" data-c="theme.arrondi" data-num="1" min="0" max="28" step="2"></label>
+          </div>
+          <label class="champ" id="champ-police-perso" hidden><span>Nom exact de la police</span><input type="text" id="f-police-perso" data-c="theme.policePerso" maxlength="60" placeholder="Par exemple Poppins"></label>
+          <p class="aide">Une police ne s'affiche que si elle est installée sur l'ordinateur de la personne qui joue : l'aperçu ci-contre utilise celle de votre poste. Calibri, Century Gothic et les autres polices Office sont livrées avec Microsoft Office, donc présentes sur la plupart des PC professionnels. Sinon, le jeu bascule sur une police proche.</p>
+          <div class="champ">
+            <span>Logo (facultatif)</span>
+            <div class="rangee">
+              <img id="logo-apercu" class="logo-apercu" alt="Logo actuel" hidden>
+              <button type="button" id="btn-logo">Choisir une image</button>
+              <button type="button" class="discret" id="btn-logo-retirer" hidden>Retirer</button>
+              <input type="file" class="cache" id="fichier-logo" accept="image/png,image/jpeg,image/svg+xml,image/webp">
+            </div>
+            <label class="champ" id="champ-logoh" hidden><span>Taille du logo <output id="logoh-val"></output></span><input type="range" id="f-logoh" data-c="theme.logoHauteur" data-num="1" min="32" max="160" step="8"></label>
+            <p class="aide">PNG, JPG, SVG ou WebP, 2 Mo maximum. L'image est intégrée au jeu exporté.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- QUESTIONS -->
+      <div class="panneau" id="p-questions" role="tabpanel" aria-labelledby="tab-questions" hidden>
+        <div class="bloc">
+          <h2>Importer depuis Excel</h2>
+          <p class="aide">Téléchargez le modèle, remplissez une ligne par question (et une ligne par concept dans la feuille « Trouve avant la fin »), puis importez le fichier. Les fichiers .xlsx et .csv sont acceptés.</p>
+          <div class="rangee">
+            <button type="button" id="btn-modele">Télécharger le modèle Excel</button>
+            <button type="button" id="btn-importer">Importer un fichier</button>
+            <input type="file" class="cache" id="fichier-import" accept=".xlsx,.xls,.csv,text/csv">
+          </div>
+          <div class="avis" id="import-bilan" hidden></div>
+        </div>
+        <div id="liste-questions"></div>
+        <div><button type="button" id="btn-ajouter">Ajouter une question</button></div>
+        <div class="trouve-zone" data-jeu="champion" hidden>
+          <h2>Trouve avant la fin <span class="compte" id="compte-trouve"></span></h2>
+          <p class="aide">Un concept à deviner avec quatre indices, du plus difficile au plus facile. Quand le joueur appuie sur « JE SAIS ! », il choisit la bonne réponse parmi les propositions.</p>
+          <div id="liste-trouve"></div>
+          <div><button type="button" id="btn-ajouter-trouve">Ajouter un concept</button></div>
+        </div>
+        <datalist id="liste-themes"></datalist>
+      </div>
+
+      <!-- RÈGLES -->
+      <div class="panneau" id="p-regles" role="tabpanel" aria-labelledby="tab-regles" hidden>
+        <div class="bloc" data-jeu="quiz">
+          <h2>Gains</h2>
+          <div class="grille">
+            <label class="champ"><span>Gain maximal</span><input type="number" id="f-gainmax" data-c="regles.gainMax" min="1" step="1"></label>
+            <label class="champ"><span>Unité</span><input type="text" id="f-unite" data-c="regles.unite" maxlength="20" placeholder="points, €, étoiles…"></label>
+            <label class="champ"><span>Progression</span>
+              <select id="f-progression" data-c="regles.progression">
+                <option value="acceleree">Accélérée (les derniers paliers valent beaucoup)</option>
+                <option value="lineaire">Régulière</option>
+              </select>
+            </label>
+            <label class="champ"><span>Paliers de sécurité</span>
+              <select id="f-securite" data-c="regles.securiteTousLes" data-num="1">
+                <option value="0">Aucun</option>
+                <option value="2">Tous les 2 paliers</option>
+                <option value="3">Tous les 3 paliers</option>
+                <option value="5">Tous les 5 paliers</option>
+              </select>
+            </label>
+          </div>
+          <div class="champ">
+            <span class="legende">Échelle obtenue (un palier par question)</span>
+            <ol class="echelle" id="echelle"></ol>
+            <p class="aide">Un gain de sécurité atteint reste acquis, quoi qu'il arrive ensuite.</p>
+          </div>
+        </div>
+        <div class="bloc" data-jeu="quiz">
+          <h2>En cas d'erreur</h2>
+          <label class="champ"><span>Une mauvaise réponse…</span>
+            <select id="f-erreur" data-c="regles.erreur">
+              <option value="descend">fait redescendre d'un palier (conseillé)</option>
+              <option value="securite">ramène au dernier palier de sécurité</option>
+              <option value="reste">ne fait rien perdre</option>
+              <option value="fin">termine la partie</option>
+            </select>
+          </label>
+          <p class="aide">Sauf avec la dernière option, l'apprenant voit toutes les questions et toutes les infos clés, même s'il se trompe tôt.</p>
+        </div>
+        <div class="bloc" data-jeu="quiz">
+          <h2>Jokers et rythme</h2>
+          <div class="grille">
+            <label class="champ"><span>50/50</span><select id="f-j-moitie" data-c="regles.jokers.moitie" data-num="1"><option value="0">Aucun</option><option value="1">1 par partie</option><option value="2">2 par partie</option><option value="3">3 par partie</option></select></label>
+            <label class="champ"><span>Indice</span><select id="f-j-indice" data-c="regles.jokers.indice" data-num="1"><option value="0">Aucun</option><option value="1">1 par partie</option><option value="2">2 par partie</option><option value="3">3 par partie</option></select></label>
+            <label class="champ"><span>Passer la question</span><select id="f-j-passer" data-c="regles.jokers.passer" data-num="1"><option value="0">Aucun</option><option value="1">1 par partie</option><option value="2">2 par partie</option><option value="3">3 par partie</option></select></label>
+            <label class="champ"><span>Temps par question</span><select id="f-chrono" data-c="regles.chrono" data-num="1"><option value="0">Sans limite</option><option value="15">15 secondes</option><option value="30">30 secondes</option><option value="45">45 secondes</option><option value="60">1 minute</option><option value="90">1 min 30</option></select></label>
+          </div>
+          <label class="coche"><input type="checkbox" id="f-melanger" data-c="regles.melangerReponses"><span>Mélanger l'ordre des réponses à chaque partie</span></label>
+        </div>
+        <div class="bloc" data-jeu="champion" hidden>
+          <h2>Manches de la partie</h2>
+          <p class="aide">Une partie enchaîne les manches cochées, dans cet ordre. Une manche sans contenu suffisant est ignorée.</p>
+          <label class="coche"><input type="checkbox" id="f-m-sprint" data-manche="sprint"><span><strong>Sprint</strong> : atteindre un nombre de points. Chaque bonne réponse rapporte 1, 2 ou 3 points selon le niveau de la question.</span></label>
+          <label class="coche"><input type="checkbox" id="f-m-serie" data-manche="serie"><span><strong>La série</strong> : enchaîner plusieurs bonnes réponses sur un thème choisi par le joueur.</span></label>
+          <label class="coche"><input type="checkbox" id="f-m-trouve" data-manche="trouve"><span><strong>Trouve avant la fin</strong> : deviner un concept grâce à des indices de plus en plus faciles.</span></label>
+        </div>
+        <div class="bloc" data-jeu="champion" hidden>
+          <h2>Sprint</h2>
+          <div class="grille">
+            <label class="champ"><span>Points à atteindre</span><input type="number" id="f-sp-obj" data-c="champion.sprint.objectif" min="1" max="99" step="1"></label>
+            <label class="champ"><span>Questions au maximum</span><input type="number" id="f-sp-max" data-c="champion.sprint.questionsMax" min="3" max="60" step="1"></label>
+            <label class="champ"><span>Temps par question</span><select id="f-sp-chrono" data-c="champion.sprint.chrono" data-num="1"><option value="0">Sans limite</option><option value="10">10 secondes</option><option value="15">15 secondes</option><option value="20">20 secondes</option><option value="30">30 secondes</option></select></label>
+          </div>
+          <p class="aide">Le niveau de chaque question (1, 2 ou 3 points) se règle dans l'onglet Questions.</p>
+        </div>
+        <div class="bloc" data-jeu="champion" hidden>
+          <h2>La série</h2>
+          <div class="grille">
+            <label class="champ"><span>Bonnes réponses d'affilée</span><input type="number" id="f-se-lon" data-c="champion.serie.longueur" min="2" max="10" step="1"></label>
+            <label class="champ"><span>Questions au maximum</span><input type="number" id="f-se-max" data-c="champion.serie.questionsMax" min="2" max="60" step="1"></label>
+          </div>
+          <p class="aide">Un thème n'est proposé que s'il contient au moins autant de questions que la série demandée. Visez le double pour limiter les répétitions. Une série réussie rapporte 5 points de bonus.</p>
+        </div>
+        <div class="bloc" data-jeu="champion" hidden>
+          <h2>Trouve avant la fin</h2>
+          <div class="grille">
+            <label class="champ"><span>Concepts par partie</span><input type="number" id="f-tr-nb" data-c="champion.trouve.nombre" min="1" max="20" step="1"></label>
+            <label class="champ"><span>Une mauvaise réponse coûte</span><select id="f-tr-pen" data-c="champion.trouve.penalite" data-num="1"><option value="0">Rien</option><option value="1">1 point</option><option value="2">2 points</option></select></label>
+          </div>
+          <p class="aide">Répondre à l'indice 1 rapporte 4 points, à l'indice 4 un seul. Sans pénalité, le plus rentable est de tenter dès le premier indice : gardez au moins 1 point.</p>
+        </div>
+        <div class="bloc" data-jeu="champion" hidden>
+          <h2>Apprendre de ses erreurs</h2>
+          <label class="coche"><input type="checkbox" id="f-reposer" data-c="champion.reposerErreurs"><span>Reposer plus tard une question ratée, pour retenter la même question</span></label>
+        </div>
+      </div>
+      <!-- SONS -->
+      <div class="panneau" id="p-sons" role="tabpanel" aria-labelledby="tab-sons" hidden>
+        <div class="bloc">
+          <h2>Ambiance sonore</h2>
+          <label class="coche"><input type="checkbox" id="f-sons-actif" data-c="sons.actif"><span>Proposer des effets sonores dans ce jeu</span></label>
+          <p class="aide">Les sons sont toujours facultatifs. Avant de commencer, le joueur est prévenu et choisit de jouer avec ou sans le son. Un bouton Son en haut de l'écran permet ensuite de les couper à tout moment.</p>
+          <div class="grille">
+            <label class="champ"><span>Volume <output id="vol-val"></output></span><input type="range" id="f-volume" data-c="sons.volume" data-num="1" min="0" max="100" step="5"></label>
+            <label class="champ" data-jeu="quiz"><span>Durée maximale du suspense</span>
+              <select id="f-suspense" data-c="sons.suspenseMax" data-num="1">
+                <option value="0">Jusqu'à la fin du morceau</option>
+                <option value="8">8 secondes</option>
+                <option value="10">10 secondes</option>
+                <option value="15">15 secondes</option>
+                <option value="20">20 secondes</option>
+              </select>
+            </label>
+          </div>
+          <div class="rangee">
+            <button type="button" id="btn-pack">Charger le pack du prototype</button>
+            <button type="button" class="discret" id="btn-sons-vider">Retirer tous les sons</button>
+          </div>
+        </div>
+        <div id="liste-sons"></div>
+        <div class="avis">Droits d'utilisation : les extraits d'émissions de télévision sont protégés. Ils conviennent pour un prototype interne. Avant une diffusion plus large (LMS, plateforme Rose, clients), faites valider leur usage ou remplacez-les par des sons libres de droits : chaque emplacement accepte n'importe quel fichier.</div>
+        <p class="aide" id="sons-poids"></p>
+        <input type="file" class="cache" id="fichier-son" accept="audio/*,.mp3,.ogg,.wav,.m4a">
+      </div>
+    </section>
+
+    <!-- APERÇU -->
+    <section class="volet apercu" id="p-apercu" role="tabpanel" aria-labelledby="tab-apercu" aria-label="Aperçu du jeu">
+      <div class="apercu-tete">
+        <div>
+          <h2>Aperçu</h2>
+          <p class="aide">C'est le vrai jeu : vous pouvez y jouer ici.</p>
+        </div>
+        <div class="rangee">
+          <label class="rangee"><span class="legende">Afficher</span><select id="f-vue"></select></label>
+          <button type="button" id="btn-rejouer">Recommencer</button>
+        </div>
+      </div>
+      <div class="scene" id="scene"></div>
+    </section>
+  </main>
+</div>
+<div id="toast" role="status" aria-live="polite" hidden></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+/*SONS_DEBUT*/
+var SONS_DEFAUT = {};
+var SONS_QPUC = {};
+/*SONS_FIN*/
+</script>
+<script>
+/*MOTEURS_DEBUT*/
+/* code injecté par construire.py depuis src/ */
+/*MOTEURS_FIN*/
+</script>
+<script>
+"use strict";
+document.documentElement.lang = "fr";
+
+/* =====================================================================
+   1. LE JEU (player). Ces deux fonctions et la feuille de style sont
+      copiées telles quelles dans le fichier exporté : l'aperçu et le jeu
+      final exécutent donc exactement le même code.
+   ===================================================================== */
+
+function calculerEchelle(regles, n) {
+  var max = Math.max(1, Math.round(Number(regles && regles.gainMax) || 0));
+  var i;
+  function croissante(a) {
+    if (!a.length || a[0] <= 0) return false;
+    for (var k = 1; k < a.length; k++) if (a[k] <= a[k - 1]) return false;
+    return true;
+  }
+  var lin = [];
+  for (i = 1; i <= n; i++) lin.push(Math.round(max * i / n));
+  if (!croissante(lin)) { lin = []; for (i = 1; i <= n; i++) lin.push(i); }
+  if (regles && regles.progression === "acceleree" && n > 1 && max >= 100) {
+    var k10 = Math.min(4, Math.floor(Math.log(max) / Math.LN10 + 1e-9) - 1);
+    var q = Math.pow(1 / Math.pow(10, k10), 1 / (n - 1));
+    var pas = [1, 1.5, 2, 2.5, 3, 4, 5, 6, 7.5, 8, 10];
+    /* On tente d'abord des montants très ronds ; si deux paliers se confondent
+       (beaucoup de questions), on affine l'arrondi, puis on garde les entiers. */
+    for (var finesse = 0; finesse < 3; finesse++) {
+      var geo = [];
+      for (i = 1; i <= n; i++) {
+        if (i === n) { geo.push(max); break; }
+        var v = max * Math.pow(q, n - i);
+        var e = Math.pow(10, Math.floor(Math.log(v) / Math.LN10 + 1e-9));
+        if (finesse === 0) {
+          var m = v / e, best = pas[0];
+          for (var p = 0; p < pas.length; p++) if (Math.abs(pas[p] - m) < Math.abs(best - m)) best = pas[p];
+          v = best * e;
+        } else if (finesse === 1) v = Math.round(v / e * 10) / 10 * e;
+        geo.push(Math.round(v));
+      }
+      if (croissante(geo)) return geo;
+    }
+  }
+  return lin;
+}
+
+function mountQuiz(racine, config, options) {
+  options = options || {};
+  var doc = racine.ownerDocument;
+  var meta = config.meta || {}, theme = config.theme || {}, regles = config.regles || {};
+  var jk = regles.jokers || {};
+  var LETTRES = ["A", "B", "C", "D", "E", "F"];
+  var el = fabriquerEl(doc);
+  appliquerTheme(racine, theme);
+
+  var questions = (config.questions || []).map(function (q) {
+    var rep = [];
+    (q.reponses || []).forEach(function (t, idx) {
+      t = String(t == null ? "" : t).trim();
+      if (t) rep.push({ texte: t, bonne: idx === Number(q.bonne) });
+    });
+    return {
+      enonce: String(q.enonce || "").trim(), rep: rep,
+      indice: String(q.indice || "").trim(), infoCle: String(q.infoCle || "").trim(),
+      source: String(q.source || "").trim()
+    };
+  }).filter(function (q) {
+    return q.enonce && q.rep.length >= 2 && q.rep.some(function (r) { return r.bonne; });
+  });
+  var n = questions.length;
+  var echelle = calculerEchelle(regles, n);
+  var pasSecu = Number(regles.securiteTousLes) || 0;
+  var modeErreur = regles.erreur || "descend";
+  var chrono = Number(regles.chrono) || 0;
+  var etat = null, minuterie = null, chronoEl = null;
+
+  /* ---------- sons : facultatifs, le joueur choisit avec ou sans et peut couper à tout moment ---------- */
+  var sons = config.sons || {}, pistes = sons.pistes || {};
+  var CLES_SONS = ["lancement", "correct", "faux", "suspens", "jackpot"];
+  var aSons = sons.actif !== false && CLES_SONS.some(function (k) { return pistes[k] && pistes[k].src; });
+  var volumeSon = Math.max(0, Math.min(1, (sons.volume != null ? Number(sons.volume) : 70) / 100));
+  var suspenseMax = Number(sons.suspenseMax) || 0;
+  var sonActif = false, audios = {}, minuteurSuspense = null, fondu = null, fonduSortie = null, sonCourant = null;
+
+  function preparerSons() {
+    CLES_SONS.forEach(function (k) {
+      if (audios[k] || !pistes[k] || !pistes[k].src) return;
+      try { var a = new Audio(pistes[k].src); a.preload = "auto"; audios[k] = a; } catch (e) {}
+    });
+  }
+  function arreterSons() {
+    if (fondu) { clearInterval(fondu); fondu = null; }
+    if (fonduSortie) { clearInterval(fonduSortie); fonduSortie = null; }
+    sonCourant = null;
+    if (minuteurSuspense) { clearTimeout(minuteurSuspense); minuteurSuspense = null; }
+    CLES_SONS.forEach(function (k) {
+      var a = audios[k];
+      if (!a) return;
+      try { a.onended = null; a.pause(); a.currentTime = 0; a.volume = volumeSon; } catch (e) {}
+    });
+  }
+  function jouer(cle, auFin) {
+    var a = sonActif ? audios[cle] : null;
+    arreterSons();
+    if (!a) { if (auFin) auFin(); return; }
+    sonCourant = cle;
+    var fini = false;
+    function terminer() { if (fini) return; fini = true; a.onended = null; if (auFin) auFin(); }
+    try {
+      a.volume = volumeSon; a.currentTime = 0; a.onended = terminer;
+      var pr = a.play();
+      if (pr && pr.catch) pr.catch(terminer);
+    } catch (e) { terminer(); }
+  }
+  /* Coupe en douceur le son en cours (passage à la question suivante), sans bloquer l'écran. */
+  function estomper(duree) {
+    var actifs = CLES_SONS.map(function (k) { return audios[k]; }).filter(function (a) { return a && !a.paused && !a.ended; });
+    if (!actifs.length) return;
+    if (fonduSortie) clearInterval(fonduSortie);
+    var pas = 50, total = Math.max(1, Math.round(duree / pas)), i = 0;
+    fonduSortie = setInterval(function () {
+      i++;
+      if (i >= total) { arreterSons(); return; }
+      actifs.forEach(function (a) { try { a.volume = Math.max(0, volumeSon * (1 - i / total)); } catch (e) {} });
+    }, pas);
+  }
+  function jouerSuspense(auFin) {
+    var fini = false;
+    function fin() { if (fini) return; fini = true; arreterSons(); auFin(); }
+    etat.sauterSuspense = fin;
+    jouer("suspens", fin);
+    if (suspenseMax > 0 && audios.suspens) {
+      minuteurSuspense = setTimeout(function () {
+        minuteurSuspense = null;
+        var v = volumeSon;
+        fondu = setInterval(function () {
+          v -= volumeSon / 8;
+          if (v <= 0.01) fin();
+          else { try { audios.suspens.volume = Math.max(0, v); } catch (e) {} }
+        }, 100);
+      }, suspenseMax * 1000);
+    }
+  }
+  function basculerSon() {
+    sonActif = !sonActif;
+    if (sonActif) preparerSons();
+    else {
+      arreterSons();
+      if (etat && etat.suspense && etat.sauterSuspense) { etat.sauterSuspense(); return; }
+    }
+    rendre(false);
+    var b = racine.querySelector("[data-son]");
+    if (b) { try { b.focus({ preventScroll: true }); } catch (e) {} }
+  }
+  function boutonSon() {
+    if (!aSons) return null;
+    return el("button", {
+      class: "qz-btn qz-son", type: "button", "data-son": "1",
+      "aria-pressed": sonActif ? "true" : "false",
+      title: sonActif ? "Couper le son" : "Activer le son",
+      text: sonActif ? "Son activé" : "Son coupé", onclick: basculerSon
+    });
+  }
+  function demarrer(avecSon) {
+    sonActif = !!avecSon;
+    if (sonActif) preparerSons();
+    signaler("debut", { total: n, son: sonActif });
+    ouvrirQuestion(0);
+    rendre(true);
+    jouer("lancement");
+  }
+  function vueChoixSon() {
+    return el("div", { class: "qz-choix-son" }, [
+      el("p", { class: "qz-avis-son" }, [
+        el("strong", { text: "Ce jeu comporte des effets sonores. " }),
+        "Ils sont facultatifs : commencez sans le son si vous préférez le silence. Vous pourrez aussi les couper à tout moment avec le bouton « Son » en haut de l'écran."
+      ]),
+      el("div", { class: "qz-actions-debut" }, [
+        el("button", { class: "qz-btn qz-principal", type: "button", "data-focus": "1", text: "Commencer avec le son", onclick: function () { demarrer(true); } }),
+        el("button", { class: "qz-btn", type: "button", text: "Commencer sans le son", onclick: function () { demarrer(false); } })
+      ])
+    ]);
+  }
+
+  function estSecurite(niv) { return pasSecu > 0 && niv > 0 && niv < n && niv % pasSecu === 0; }
+  function montant(niv) { return niv <= 0 ? 0 : echelle[Math.min(niv, n) - 1]; }
+  function fmt(v) { return Number(v).toLocaleString("fr-FR") + (regles.unite ? " " + regles.unite : ""); }
+  function signaler(type, d) {
+    if (typeof options.onEvenement === "function") { try { options.onEvenement(type, d || {}); } catch (e) {} }
+  }
+  function melanger(a) {
+    a = a.slice();
+    for (var i = a.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1)), t = a[i]; a[i] = a[j]; a[j] = t;
+    }
+    return a;
+  }
+  function arreterChrono() { if (minuterie) { clearInterval(minuterie); minuterie = null; } }
+
+  function nouvellePartie() {
+    arreterChrono();
+    arreterSons();
+    etat = {
+      ecran: "accueil", i: 0, niveau: 0, plancher: 0, terminee: false, suspense: false, sauterSuspense: null,
+      jokers: { moitie: Number(jk.moitie) || 0, indice: Number(jk.indice) || 0, passer: Number(jk.passer) || 0 },
+      resultats: [],
+      ordre: questions.map(function (q) { return regles.melangerReponses === false ? q.rep.slice() : melanger(q.rep); }),
+      choix: null, valide: false, masquees: [], indiceVisible: false, reste: 0, bilan: null
+    };
+  }
+  function appliquer(ok) {
+    if (ok) {
+      etat.niveau = Math.min(n, etat.niveau + 1);
+      if (estSecurite(etat.niveau)) etat.plancher = Math.max(etat.plancher, etat.niveau);
+    } else if (modeErreur === "descend") etat.niveau = Math.max(etat.plancher, etat.niveau - 1);
+    else if (modeErreur === "securite") etat.niveau = etat.plancher;
+    else if (modeErreur === "fin") { etat.niveau = etat.plancher; etat.terminee = true; }
+  }
+  function ouvrirQuestion(i) {
+    arreterChrono();
+    etat.ecran = "question"; etat.i = i; etat.choix = null; etat.valide = false;
+    etat.masquees = []; etat.indiceVisible = false; etat.bilan = null;
+    if (chrono > 0) {
+      etat.reste = chrono;
+      minuterie = setInterval(function () {
+        etat.reste--;
+        if (chronoEl) {
+          chronoEl.textContent = etat.reste + " s";
+          chronoEl.className = "qz-chrono" + (etat.reste <= 5 ? " qz-urgent" : "");
+        }
+        if (etat.reste <= 0) conclure("temps");
+      }, 1000);
+    }
+  }
+  function conclure(motif) {
+    arreterChrono();
+    /* Suspense avant le verdict : dernière question, ou question qui mène à un palier de sécurité. */
+    var enjeu = motif === "reponse" && sonActif && audios.suspens && (etat.i + 1 >= n || estSecurite(etat.niveau + 1));
+    if (!enjeu) { reveler(motif); return; }
+    etat.suspense = true;
+    rendre(true);
+    jouerSuspense(function () { etat.suspense = false; etat.sauterSuspense = null; reveler(motif); });
+  }
+  function reveler(motif) {
+    var rep = etat.ordre[etat.i];
+    var ok = motif === "reponse" && etat.choix != null && rep[etat.choix].bonne;
+    var avant = etat.niveau;
+    if (motif !== "passe") appliquer(ok);
+    etat.valide = true;
+    etat.bilan = { ok: ok, motif: motif, avant: avant, apres: etat.niveau };
+    etat.resultats[etat.i] = { ok: ok, passe: motif === "passe" };
+    signaler("reponse", { question: etat.i + 1, total: n, correcte: ok, motif: motif, gain: montant(etat.niveau) });
+    rendre(true);
+    if (motif === "passe") arreterSons();
+    else if (ok) jouer(etat.i + 1 >= n && audios.jackpot ? "jackpot" : "correct");
+    else jouer("faux");
+  }
+  function suivante() {
+    if (etat.terminee || etat.i + 1 >= n) terminer();
+    else { estomper(450); ouvrirQuestion(etat.i + 1); rendre(true); }
+  }
+  function terminer() {
+    arreterChrono();
+    if (sonCourant !== "jackpot") estomper(450);
+    etat.ecran = "fin";
+    var bonnes = etat.resultats.filter(function (r) { return r && r.ok; }).length;
+    signaler("fin", { gain: montant(etat.niveau), palier: etat.niveau, bonnes: bonnes, total: n, scorePourcent: n ? Math.round(100 * bonnes / n) : 0 });
+    rendre(true);
+  }
+
+  /* ---------- vues ---------- */
+  function logo(cls) { return theme.logo ? el("img", { class: cls, src: theme.logo, alt: "" }) : null; }
+
+  function vueAccueil() {
+    if (!n) {
+      return el("div", { class: "qz-accueil" }, [
+        logo("qz-logo-grand"),
+        el("h1", { text: meta.titre || "Quiz" }),
+        el("p", { class: "qz-vide", text: "Aucune question complète pour l'instant. Ajoutez un énoncé, au moins deux réponses et cochez la bonne." })
+      ]);
+    }
+    var regle = {
+      descend: "Une erreur vous fait redescendre d'un palier.",
+      securite: "Une erreur vous ramène au dernier palier de sécurité.",
+      reste: "Une erreur ne vous fait rien perdre.",
+      fin: "Une erreur met fin à la partie."
+    }[modeErreur];
+    var liste = [
+      n + (n > 1 ? " questions, un palier par bonne réponse." : " question."),
+      "Jusqu'à " + fmt(echelle[n - 1]) + " à gagner.",
+      regle
+    ];
+    if (pasSecu > 0 && n > pasSecu) liste.push("Tous les " + pasSecu + " paliers, votre gain est mis en sécurité.");
+    var j = [];
+    if (jk.moitie > 0) j.push(jk.moitie + " × 50/50");
+    if (jk.indice > 0) j.push(jk.indice + " × indice");
+    if (jk.passer > 0) j.push(jk.passer + " × passer");
+    if (j.length) liste.push("Vos jokers : " + j.join(", ") + ".");
+    if (chrono > 0) liste.push(chrono + " secondes par question.");
+    return el("div", { class: "qz-accueil" }, [
+      logo("qz-logo-grand"),
+      el("h1", { text: meta.titre || "Quiz" }),
+      meta.sousTitre ? el("p", { class: "qz-accroche", text: meta.sousTitre }) : null,
+      el("ul", { class: "qz-regles" }, liste.map(function (t) { return el("li", { text: t }); })),
+      aSons ? vueChoixSon() : el("button", { class: "qz-btn qz-principal", type: "button", "data-focus": "1", text: "Commencer", onclick: function () { demarrer(false); } })
+    ]);
+  }
+
+  function vueEchelle() {
+    var items = [];
+    for (var niv = n; niv >= 1; niv--) {
+      var cls = "qz-palier";
+      if (niv <= etat.niveau) cls += " qz-acquis";
+      if (niv === etat.niveau) cls += " qz-courant";
+      if (!etat.valide && niv === etat.niveau + 1) cls += " qz-enjeu";
+      if (estSecurite(niv)) cls += " qz-surete";
+      items.push(el("li", { class: cls }, [
+        el("span", { class: "qz-palier-n", text: String(niv) }),
+        el("span", { class: "qz-palier-v", text: fmt(echelle[niv - 1]) }),
+        estSecurite(niv) ? el("span", { class: "qz-palier-s", title: "Palier de sécurité", text: "sécurité" }) : null
+      ]));
+    }
+    return el("aside", { class: "qz-echelle", "aria-label": "Échelle des gains" }, [el("ol", {}, items)]);
+  }
+
+  function vueQuestion() {
+    var q = questions[etat.i], rep = etat.ordre[etat.i];
+    chronoEl = chrono > 0 && !etat.valide && !etat.suspense ? el("span", { class: "qz-chrono" + (etat.reste <= 5 ? " qz-urgent" : ""), "aria-label": "Temps restant", text: etat.reste + " s" }) : null;
+
+    var reponses = el("div", { class: "qz-reponses", role: "group", "aria-label": "Réponses" }, rep.map(function (r, idx) {
+      var cls = "qz-rep", marque = null;
+      var masquee = etat.masquees.indexOf(idx) >= 0;
+      if (masquee) cls += " qz-masquee";
+      if (!etat.valide && etat.choix === idx) cls += " qz-choisie";
+      if (etat.valide) {
+        if (r.bonne) { cls += " qz-bonne"; marque = "✓"; }
+        else if (etat.choix === idx) { cls += " qz-fausse"; marque = "✗"; }
+        else cls += " qz-neutre";
+      }
+      return el("button", {
+        class: cls, type: "button", disabled: etat.valide || etat.suspense || masquee,
+        "aria-pressed": !etat.valide && etat.choix === idx ? "true" : "false",
+        onclick: function () { etat.choix = idx; rendre(true); }
+      }, [
+        el("span", { class: "qz-lettre", text: LETTRES[idx] }),
+        el("span", { class: "qz-rep-texte", text: r.texte }),
+        marque ? el("span", { class: "qz-marque", "aria-hidden": "true", text: marque }) : null
+      ]);
+    }));
+
+    var bas;
+    if (etat.suspense) {
+      bas = el("div", { class: "qz-suspense", role: "status" }, [
+        el("p", { class: "qz-suspense-titre", text: "Verdict…" }),
+        el("p", { class: "qz-doux", text: "Réponse validée. Un peu de suspense avant de savoir." }),
+        el("button", { class: "qz-btn", type: "button", "data-focus": "1", text: "Passer le suspense", onclick: function () { if (etat.sauterSuspense) etat.sauterSuspense(); } })
+      ]);
+    } else if (!etat.valide) {
+      var mauvaises = rep.map(function (r, idx) { return r.bonne ? -1 : idx; }).filter(function (x) { return x >= 0; });
+      var jokers = [];
+      if (jk.moitie > 0) jokers.push(el("button", {
+        class: "qz-btn qz-joker", type: "button",
+        disabled: etat.jokers.moitie <= 0 || etat.masquees.length > 0 || rep.length <= 2,
+        onclick: function () {
+          etat.jokers.moitie--;
+          etat.masquees = melanger(mauvaises).slice(0, rep.length - 2);
+          if (etat.masquees.indexOf(etat.choix) >= 0) etat.choix = null;
+          rendre(true);
+        }
+      }, ["50/50 ", el("span", { class: "qz-reste", text: "×" + etat.jokers.moitie })]));
+      if (jk.indice > 0) jokers.push(el("button", {
+        class: "qz-btn qz-joker", type: "button",
+        disabled: etat.jokers.indice <= 0 || etat.indiceVisible || !q.indice,
+        title: q.indice ? null : "Pas d'indice pour cette question",
+        onclick: function () { etat.jokers.indice--; etat.indiceVisible = true; rendre(true); }
+      }, ["Indice ", el("span", { class: "qz-reste", text: "×" + etat.jokers.indice })]));
+      if (jk.passer > 0) jokers.push(el("button", {
+        class: "qz-btn qz-joker", type: "button", disabled: etat.jokers.passer <= 0,
+        onclick: function () { etat.jokers.passer--; etat.choix = null; conclure("passe"); }
+      }, ["Passer ", el("span", { class: "qz-reste", text: "×" + etat.jokers.passer })]));
+      bas = el("div", { class: "qz-actions" }, [
+        el("div", { class: "qz-jokers" }, jokers),
+        el("button", { class: "qz-btn qz-principal", type: "button", disabled: etat.choix == null, "data-focus": etat.choix != null ? "1" : null, text: "Valider ma réponse", onclick: function () { conclure("reponse"); } })
+      ]);
+    } else {
+      var b = etat.bilan, bonneIdx = 0;
+      rep.forEach(function (r, idx) { if (r.bonne) bonneIdx = idx; });
+      var titre = b.motif === "passe" ? "Question passée" : b.ok ? "Bonne réponse" : b.motif === "temps" ? "Temps écoulé" : "Mauvaise réponse";
+      var suite;
+      if (b.motif === "passe") suite = "Vous restez à " + fmt(montant(b.apres)) + ".";
+      else if (b.ok) suite = "Vous atteignez le palier " + b.apres + " : " + fmt(montant(b.apres)) + "." + (estSecurite(b.apres) ? " Ce gain est maintenant en sécurité." : "");
+      else if (etat.terminee) suite = "La partie s'arrête ici. Vous repartez avec " + fmt(montant(b.apres)) + ".";
+      else if (b.apres < b.avant) suite = "Vous redescendez à " + fmt(montant(b.apres)) + ".";
+      else suite = "Vous restez à " + fmt(montant(b.apres)) + ".";
+      var dernier = etat.terminee || etat.i + 1 >= n;
+      bas = el("div", { class: "qz-retour " + (b.ok ? "qz-retour-ok" : b.motif === "passe" ? "" : "qz-retour-ko"), role: "status" }, [
+        el("p", { class: "qz-retour-titre" }, [el("span", { "aria-hidden": "true", text: b.ok ? "✓ " : b.motif === "passe" ? "→ " : "✗ " }), titre]),
+        b.ok ? null : el("p", {}, ["La bonne réponse : ", el("strong", { text: LETTRES[bonneIdx] + ". " + rep[bonneIdx].texte })]),
+        q.infoCle ? el("div", { class: "qz-info" }, [
+          el("p", { class: "qz-etiquette", text: "À retenir" }),
+          el("p", { text: q.infoCle }),
+          q.source ? el("p", { class: "qz-source", text: "Source : " + q.source }) : null
+        ]) : null,
+        el("p", { class: "qz-suite", text: suite }),
+        el("button", { class: "qz-btn qz-principal", type: "button", "data-focus": "1", text: dernier ? "Voir mon résultat" : "Question suivante", onclick: suivante })
+      ]);
+    }
+
+    return el("div", { class: "qz-jeu" }, [
+      el("header", { class: "qz-entete" }, [
+        logo("qz-logo"),
+        el("span", { class: "qz-titre-court", text: meta.titre || "" }),
+        chronoEl,
+        boutonSon()
+      ]),
+      el("div", { class: "qz-plateau" }, [
+        el("div", { class: "qz-principale" }, [
+          el("p", { class: "qz-position" }, [
+            el("span", { text: "Question " + (etat.i + 1) + " sur " + n }),
+            el("span", { class: "qz-gain-actuel", text: "Gain actuel : " + fmt(montant(etat.niveau)) })
+          ]),
+          el("h2", { class: "qz-enonce", text: q.enonce }),
+          etat.indiceVisible && !etat.valide ? el("p", { class: "qz-indice" }, [el("strong", { text: "Indice : " }), q.indice]) : null,
+          reponses,
+          bas
+        ]),
+        vueEchelle()
+      ])
+    ]);
+  }
+
+  function vueFin() {
+    var bonnes = etat.resultats.filter(function (r) { return r && r.ok; }).length;
+    var vues = etat.resultats.length;
+    var memo = [];
+    for (var i = 0; i < vues; i++) {
+      var q = questions[i], r = etat.resultats[i] || {};
+      var bonne = q.rep.filter(function (x) { return x.bonne; })[0];
+      memo.push(el("li", { class: "qz-memo-item" }, [
+        el("span", { class: "qz-memo-marque " + (r.ok ? "qz-ok" : "qz-ko"), text: r.ok ? "✓" : r.passe ? "→" : "✗", title: r.ok ? "Réussie" : r.passe ? "Passée" : "Manquée" }),
+        el("div", {}, [
+          el("p", { class: "qz-memo-q", text: q.enonce }),
+          el("p", { class: "qz-memo-r" }, [el("strong", { text: bonne.texte })]),
+          q.infoCle ? el("p", { class: "qz-memo-info", text: q.infoCle }) : null
+        ])
+      ]));
+    }
+    return el("div", { class: "qz-fin" }, [
+      boutonSon(),
+      logo("qz-logo-grand"),
+      el("p", { class: "qz-etiquette", text: "Partie terminée" }),
+      el("h1", { class: "qz-gain-final", text: fmt(montant(etat.niveau)) }),
+      el("p", { class: "qz-score", text: bonnes + (bonnes > 1 ? " bonnes réponses" : " bonne réponse") + " sur " + n + " · palier " + etat.niveau + " sur " + n }),
+      meta.messageFin ? el("p", { class: "qz-accroche", text: meta.messageFin }) : null,
+      el("button", { class: "qz-btn qz-principal", type: "button", "data-focus": "1", text: "Rejouer", onclick: function () { nouvellePartie(); rendre(true); } }),
+      el("section", { class: "qz-memo" }, [
+        el("h2", { text: "Fiche mémo" }),
+        el("ol", {}, memo)
+      ])
+    ]);
+  }
+
+  function rendre(focaliser) {
+    chronoEl = null;
+    var vue = etat.ecran === "question" ? vueQuestion() : etat.ecran === "fin" ? vueFin() : vueAccueil();
+    while (racine.firstChild) racine.removeChild(racine.firstChild);
+    racine.appendChild(el("div", { class: "qz-cadre" }, [vue]));
+    racine.scrollTop = 0;
+    var ech = racine.querySelector(".qz-echelle");
+    var repere = ech && (ech.querySelector(".qz-enjeu") || ech.querySelector(".qz-courant"));
+    if (repere) ech.scrollTop = repere.offsetTop - ech.clientHeight / 2 + repere.offsetHeight / 2;
+    if (focaliser) {
+      var cible = racine.querySelector("[data-focus]") || racine;
+      try { cible.focus({ preventScroll: true }); } catch (e) {}
+    }
+  }
+
+  function touche(ev) {
+    if (!etat || etat.ecran !== "question" || etat.valide || etat.suspense) return;
+    if (ev.ctrlKey || ev.metaKey || ev.altKey) return;
+    var k = String(ev.key || "").toLowerCase();
+    var idx = "abcd".indexOf(k);
+    if (idx < 0) idx = "1234".indexOf(k);
+    if (k.length !== 1 || idx < 0 || idx >= etat.ordre[etat.i].length || etat.masquees.indexOf(idx) >= 0) return;
+    etat.choix = idx; rendre(true);
+  }
+  var ecouteur = options.touchesGlobales ? doc : racine;
+  ecouteur.addEventListener("keydown", touche);
+
+  nouvellePartie();
+  var dep = options.depart;
+  if (dep && n) {
+    if (dep.ecran === "question") {
+      var cible = Math.max(0, Math.min(n - 1, Number(dep.index) || 0));
+      for (var a = 0; a < cible; a++) { appliquer(true); etat.resultats[a] = { ok: true }; }
+      etat.terminee = false;
+      ouvrirQuestion(cible);
+    } else if (dep.ecran === "fin") {
+      for (var c = 0; c < n && !etat.terminee; c++) {
+        var okSim = !(n > 2 && c === 1);
+        appliquer(okSim); etat.resultats[c] = { ok: okSim };
+      }
+      etat.ecran = "fin";
+    }
+  }
+  rendre(!!options.autoFocus);
+
+  return { detruire: function () { arreterChrono(); arreterSons(); ecouteur.removeEventListener("keydown", touche); } };
+}
+
+const PLAYER_CSS = `
+.qz{--trait:color-mix(in srgb,var(--texte) 18%,transparent);--doux:color-mix(in srgb,var(--texte) 72%,var(--fond));--ok:#2FA36B;--ko:#E5484D;
+  box-sizing:border-box;height:100%;overflow:auto;background:var(--fond);color:var(--texte);font-family:var(--police);font-size:16px;line-height:1.45;container-type:inline-size;outline:none}
+.qz *{box-sizing:border-box}
+.qz p,.qz h1,.qz h2,.qz ol,.qz ul{margin:0}
+.qz-cadre{max-width:1120px;min-height:100%;margin:0 auto;padding:24px 20px 32px;display:flex;flex-direction:column}
+.qz-btn{font:inherit;font-weight:600;color:var(--texte);background:transparent;border:1.5px solid var(--trait);border-radius:var(--rayon);padding:11px 18px;cursor:pointer;transition:transform .08s,border-color .15s}
+.qz-btn:hover:not(:disabled){border-color:var(--accent)}
+.qz-btn:active:not(:disabled){transform:translateY(1px)}
+.qz-btn:disabled{opacity:.4;cursor:not-allowed}
+.qz-principal{background:var(--accent);border-color:var(--accent);color:var(--sur-accent);padding:12px 24px}
+.qz-principal:hover:not(:disabled){filter:brightness(1.07)}
+.qz :focus-visible{outline:3px solid var(--accent);outline-offset:3px}
+.qz-principal:focus-visible{outline-color:var(--texte)}
+.qz-etiquette{font-size:12.5px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--accent)}
+
+.qz-accueil,.qz-fin{margin:auto 0;padding:24px 0;display:flex;flex-direction:column;align-items:flex-start;gap:18px;max-width:720px}
+.qz-accueil h1{font-size:clamp(30px,6cqi,54px);line-height:1.05;letter-spacing:-.02em;text-wrap:balance}
+.qz-accroche{font-size:18px;color:var(--doux);max-width:58ch}
+.qz-regles{list-style:none;padding:16px 18px;display:flex;flex-direction:column;gap:6px;background:var(--carte);border-radius:var(--rayon);width:100%}
+.qz-regles li{padding-left:18px;position:relative}
+.qz-regles li::before{content:"";position:absolute;left:0;top:.6em;width:7px;height:7px;border-radius:2px;background:var(--accent)}
+.qz-logo-grand{max-height:var(--logo-h,64px);max-width:min(100%,calc(var(--logo-h,64px) * 5));object-fit:contain}
+.qz-vide{background:var(--carte);padding:14px 16px;border-radius:var(--rayon)}
+
+.qz-jeu{display:flex;flex-direction:column;gap:20px;flex:1}
+.qz-entete{display:flex;align-items:center;gap:12px;min-height:36px}
+.qz-logo{max-height:min(56px,calc(var(--logo-h,64px) * .5));max-width:min(40%,calc(var(--logo-h,64px) * 2.5));object-fit:contain}
+.qz-titre-court{font-weight:700;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.qz-chrono{font-variant-numeric:tabular-nums;font-weight:700;padding:5px 12px;border-radius:99px;border:1.5px solid var(--trait)}
+.qz-urgent{border-color:var(--ko);color:var(--ko)}
+.qz-plateau{display:grid;grid-template-columns:minmax(0,1fr) 230px;gap:28px;align-items:start}
+.qz-principale{display:flex;flex-direction:column;gap:16px;min-width:0}
+.qz-position{display:flex;flex-wrap:wrap;justify-content:space-between;gap:4px 16px;font-size:14px;color:var(--doux);font-variant-numeric:tabular-nums}
+.qz-gain-actuel{font-weight:700;color:var(--accent)}
+.qz-enonce{font-size:clamp(20px,3.4cqi,30px);line-height:1.22;letter-spacing:-.01em;text-wrap:balance;padding:4px 0 6px}
+.qz-indice{background:var(--carte);border-left:4px solid var(--accent);padding:10px 14px;border-radius:calc(var(--rayon) / 2)}
+.qz-reponses{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.qz-rep{font:inherit;color:var(--texte);text-align:left;background:var(--carte);border:2px solid transparent;border-radius:var(--rayon);padding:14px;display:flex;gap:12px;align-items:center;cursor:pointer;min-height:64px;transition:border-color .15s,transform .08s}
+.qz-rep:hover:not(:disabled){border-color:var(--trait)}
+.qz-rep:active:not(:disabled){transform:scale(.99)}
+.qz-lettre{flex:none;width:32px;height:32px;display:grid;place-items:center;border-radius:calc(var(--rayon) * .6);background:color-mix(in srgb,var(--texte) 12%,transparent);font-weight:700}
+.qz-rep-texte{flex:1;min-width:0;overflow-wrap:anywhere}
+.qz-marque{flex:none;font-weight:700;font-size:20px}
+.qz-choisie{border-color:var(--accent)}
+.qz-choisie .qz-lettre{background:var(--accent);color:var(--sur-accent)}
+.qz-rep:disabled{cursor:default}
+.qz-masquee{opacity:.28}
+.qz-masquee .qz-rep-texte{text-decoration:line-through}
+.qz-neutre{opacity:.55}
+.qz-bonne{border-color:var(--ok);background:color-mix(in srgb,var(--ok) 24%,var(--carte))}
+.qz-bonne .qz-lettre{background:var(--ok);color:#fff}
+.qz-fausse{border-color:var(--ko);background:color-mix(in srgb,var(--ko) 22%,var(--carte))}
+.qz-fausse .qz-lettre{background:var(--ko);color:#fff}
+.qz-actions{display:flex;flex-wrap:wrap;gap:12px;justify-content:space-between;align-items:center}
+.qz-jokers{display:flex;flex-wrap:wrap;gap:8px}
+.qz-joker{padding:9px 14px;font-size:14.5px}
+.qz-reste{opacity:.7;font-variant-numeric:tabular-nums}
+.qz-retour{background:var(--carte);border-radius:var(--rayon);padding:18px;display:flex;flex-direction:column;gap:12px;align-items:flex-start;border-top:4px solid var(--trait)}
+.qz-retour-ok{border-top-color:var(--ok)}
+.qz-retour-ko{border-top-color:var(--ko)}
+.qz-retour-titre{font-size:19px;font-weight:700}
+.qz-info{display:flex;flex-direction:column;gap:4px;max-width:68ch}
+.qz-source{font-size:13px;color:var(--doux)}
+.qz-suite{color:var(--doux);font-variant-numeric:tabular-nums}
+
+.qz-echelle{position:relative;background:var(--carte);border-radius:var(--rayon);padding:10px;max-height:560px;overflow:auto}
+.qz-echelle ol{list-style:none;padding:0;display:flex;flex-direction:column;gap:3px}
+.qz-palier{display:flex;gap:10px;align-items:baseline;padding:6px 10px;border-radius:calc(var(--rayon) * .5);font-variant-numeric:tabular-nums;color:var(--doux);border:1.5px solid transparent}
+.qz-palier-n{width:1.6em;text-align:right;font-size:13px;opacity:.75}
+.qz-palier-v{flex:1;font-weight:600}
+.qz-palier-s{font-size:10.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--accent)}
+.qz-surete .qz-palier-v{color:var(--texte)}
+.qz-acquis{color:var(--texte);background:color-mix(in srgb,var(--accent) 16%,transparent)}
+.qz-courant{background:var(--accent);color:var(--sur-accent)}
+.qz-courant .qz-palier-v,.qz-courant .qz-palier-s{color:var(--sur-accent)}
+.qz-enjeu{border-color:var(--accent);color:var(--texte)}
+
+.qz-fin{max-width:780px}
+.qz-gain-final{font-size:clamp(40px,9cqi,80px);line-height:1;letter-spacing:-.03em;color:var(--accent);font-variant-numeric:tabular-nums}
+.qz-score{font-size:17px;font-variant-numeric:tabular-nums}
+.qz-memo{width:100%;display:flex;flex-direction:column;gap:12px;margin-top:10px}
+.qz-memo h2{font-size:20px}
+.qz-memo ol{list-style:none;padding:0;display:flex;flex-direction:column;gap:8px}
+.qz-memo-item{display:flex;gap:12px;background:var(--carte);border-radius:var(--rayon);padding:12px 14px}
+.qz-memo-item>div{display:flex;flex-direction:column;gap:3px;min-width:0}
+.qz-memo-marque{flex:none;width:26px;height:26px;display:grid;place-items:center;border-radius:50%;font-weight:700;font-size:14px;background:color-mix(in srgb,var(--texte) 14%,transparent)}
+.qz-memo-marque.qz-ok{background:var(--ok);color:#fff}
+.qz-memo-q{font-size:14px;color:var(--doux)}
+.qz-memo-info{font-size:14.5px}
+
+.qz-son{padding:6px 12px;font-size:13.5px;flex:none}
+.qz-fin>.qz-son{align-self:flex-end}
+.qz-doux{color:var(--doux)}
+.qz-choix-son{display:flex;flex-direction:column;gap:14px;width:100%}
+.qz-avis-son{background:var(--carte);border-left:4px solid var(--accent);padding:12px 14px;border-radius:calc(var(--rayon) / 2);max-width:62ch}
+.qz-actions-debut{display:flex;flex-wrap:wrap;gap:10px}
+.qz-suspense{background:var(--carte);border-radius:var(--rayon);padding:18px;display:flex;flex-direction:column;gap:10px;align-items:flex-start;border-top:4px solid var(--accent)}
+.qz-suspense-titre{font-size:19px;font-weight:700;animation:qz-pulse 1.3s ease-in-out infinite}
+@keyframes qz-pulse{50%{opacity:.45}}
+
+@container (max-width:780px){
+  .qz-plateau{grid-template-columns:minmax(0,1fr)}
+  .qz-echelle{display:none}
+}
+@container (max-width:520px){
+  .qz-cadre{padding:18px 14px 24px}
+  .qz-reponses{grid-template-columns:minmax(0,1fr)}
+  .qz-actions{flex-direction:column;align-items:stretch}
+}
+@media (prefers-reduced-motion:reduce){.qz *{transition:none!important;animation:none!important}}
+`;
+
+/* =====================================================================
+   2. L'ATELIER (éditeur)
+   ===================================================================== */
+
+const $ = (id) => document.getElementById(id);
+const CLE_BROUILLON = "atelier-quiz-brouillon-v1";
+let uidSuivant = 1;
+const uid = () => "q" + (uidSuivant++);
+
+const SLOTS_SON = [
+  { jeu: "quiz", cle: "lancement", titre: "Lancement", quand: "Joué quand le joueur démarre la partie." },
+  { jeu: "quiz", cle: "correct", titre: "Bonne réponse", quand: "Joué quand la réponse est juste." },
+  { jeu: "quiz", cle: "faux", titre: "Mauvaise réponse", quand: "Joué quand la réponse est fausse ou que le temps est écoulé." },
+  { jeu: "quiz", cle: "suspens", titre: "Suspense", quand: "Joué avant le verdict de la dernière question et des questions qui mènent à un palier de sécurité. Le joueur peut le passer, et sa durée est plafonnée par le réglage ci-dessus." },
+  { jeu: "quiz", cle: "jackpot", titre: "Jackpot", quand: "Joué quand la dernière question est réussie, à la place du son Bonne réponse." },
+  { jeu: "champion", cle: "qp_generique", titre: "Générique", quand: "Joué au démarrage de la partie, puis coupé en fondu quand la première manche commence." },
+  { jeu: "champion", cle: "qp_buzzer", titre: "Buzzer", quand: "Joué quand le joueur appuie sur « JE SAIS ! » dans Trouve avant la fin." },
+  { jeu: "champion", cle: "qp_correct", titre: "Bonne réponse", quand: "Joué quand la réponse est juste." },
+  { jeu: "champion", cle: "qp_faux", titre: "Mauvaise réponse", quand: "Joué quand la réponse est fausse ou que le temps est écoulé." },
+  { jeu: "champion", cle: "qp_timer", titre: "Timer", quand: "Joué pendant le compte à rebours du Sprint chronométré, et coupé dès la réponse." }
+];
+function slotsDuJeu(jeu) { const j = jeu || (typeof cfg === "object" && cfg ? cfg.jeu : "") || "quiz"; return SLOTS_SON.filter((s) => s.jeu === j); }
+function packDefaut(jeu) {
+  const p = {};
+  const ajouter = (src) => { if (src && typeof src === "object") Object.keys(src).forEach((k) => { p[k] = Object.assign({}, src[k]); }); };
+  if (!jeu || jeu === "quiz") ajouter(typeof SONS_DEFAUT === "object" ? SONS_DEFAUT : null);
+  if (!jeu || jeu === "champion") ajouter(typeof SONS_QPUC === "object" ? SONS_QPUC : null);
+  return p;
+}
+function nouvelId() { return Math.random().toString(36).slice(2, 10); }
+function reglesChampion() {
+  return { manches: ["sprint", "serie", "trouve"], sprint: { objectif: 9, questionsMax: 14, chrono: 0 }, serie: { longueur: 4, questionsMax: 12 }, trouve: { nombre: 3, penalite: 1 }, reposerErreurs: true };
+}
+const THEMES_EX = ["Techniques de révision", "Fonctionnement de la mémoire", "Techniques de révision", "Fonctionnement de la mémoire", "Idées reçues", "Fonctionnement de la mémoire", "Techniques de révision", "Techniques de révision", "Fonctionnement de la mémoire", "Idées reçues"];
+const NIV_EX = ["1", "1", "2", "2", "2", "1", "3", "2", "3", "3"];
+function trouvesExemple() {
+  const T = (theme, indices, reponse, faux, infoCle) => ({ uid: uid(), theme, indices, reponse, faux, infoCle, source: "" });
+  return [
+    T("Techniques de révision",
+      ["Cet effet est observé en psychologie de la mémoire depuis plus d'un siècle.", "Il oppose deux manières de répartir la même durée de travail.", "Réviser 20 minutes aujourd'hui, 20 dans trois jours et 20 dans dix jours en est une illustration.", "Il s'oppose au bachotage : on étale les séances au lieu de tout concentrer la veille."],
+      "L'effet d'espacement", ["L'effet de primauté", "L'effet de halo", "L'effet Zeigarnik"],
+      "Étaler les séances de révision donne un souvenir plus durable qu'une seule séance de même durée."),
+    T("Fonctionnement de la mémoire",
+      ["Elle est sollicitée quand vous retenez un numéro de téléphone le temps de le composer.", "Sa capacité est très limitée : environ quatre éléments à la fois.", "Elle est saturée quand un cours présente trop d'informations nouvelles d'un seul coup.", "Son nom évoque un espace où l'on manipule l'information pendant une tâche."],
+      "La mémoire de travail", ["La mémoire sensorielle", "La mémoire procédurale", "La mémoire épisodique"],
+      "La mémoire de travail ne retient qu'environ quatre éléments à la fois : découper un contenu en petites unités aide à ne pas la saturer."),
+    T("Techniques de révision",
+      ["Son nom vient du vocabulaire des fils et des tissages.", "Elle consiste à mélanger plusieurs types d'exercices plutôt que de les enchaîner par blocs.", "Elle paraît plus difficile sur le moment, mais améliore le transfert.", "Au lieu de dix exercices A puis dix exercices B, on alterne A, B, A, B."],
+      "L'entrelacement", ["La répétition massée", "La surcharge cognitive", "L'apprentissage implicite"],
+      "Mélanger les types d'exercices oblige à reconnaître quel savoir utiliser : c'est plus exigeant, mais cela améliore la mémorisation et le transfert."),
+    T("Idées reçues",
+      ["On la ressent surtout après avoir relu plusieurs fois le même texte.", "Elle confond deux sensations : reconnaître et savoir restituer.", "Un texte déjà lu paraît facile, et cette aisance est prise pour du savoir.", "On la dissipe en se testant sans support."],
+      "L'illusion de maîtrise", ["Le biais de confirmation", "L'effet de halo", "L'effet Dunning-Kruger"],
+      "Se tester sans support montre ce que l'on sait vraiment : relire donne seulement une impression de familiarité."),
+    T("Fonctionnement de la mémoire",
+      ["Elle concerne les erreurs, pas les bonnes réponses.", "Plus on était sûr de soi en se trompant, plus l'effet est marqué.", "La surprise de se voir corrigé renforce le souvenir de la correction.", "Son nom suggère une correction qui va plus loin que la normale."],
+      "L'effet d'hypercorrection", ["L'effet de récence", "L'effet de génération", "L'effet de désaccord"],
+      "Une erreur commise avec assurance, puis corrigée, se retient mieux qu'une erreur faite en hésitant.")
+  ];
+}
+const PALETTES = [
+  { nom: "Pétrole", fond: "#0E3B43", carte: "#14505B", texte: "#F4F7F5", accent: "#F5B841" },
+  { nom: "Clair", fond: "#F2F4F8", carte: "#FFFFFF", texte: "#1B2333", accent: "#3B5BDB" },
+  { nom: "Bordeaux", fond: "#3A0F1E", carte: "#54182C", texte: "#FBF3EE", accent: "#F2A65A" },
+  { nom: "Forêt", fond: "#173527", carte: "#20483A", texte: "#F1F6EF", accent: "#C6E377" },
+  { nom: "Encre", fond: "#15171C", carte: "#24272F", texte: "#EEF0F3", accent: "#FF7A59" }
+];
+
+function editionExemple() {
+  let iq = 0;
+  const Q = (enonce, reponses, bonne, indice, infoCle, source) => { const i = iq++; return { uid: uid(), enonce, reponses, bonne, indice, infoCle, source, theme: THEMES_EX[i] || "", niveau: NIV_EX[i] || "" }; };
+  return {
+    format: "quiz-paliers", version: 1,
+    meta: {
+      titre: "Les secrets de la mémoire",
+      sousTitre: "Dix questions pour comprendre comment on apprend, et comment on oublie.",
+      messageFin: "Retenez surtout ceci : se tester régulièrement vaut mieux que relire.",
+      exemple: true,
+      id: "exemple"
+    },
+    theme: { fond: "#0E3B43", carte: "#14505B", texte: "#F4F7F5", accent: "#F5B841", police: "sans", policePerso: "", arrondi: 14, logo: null, logoHauteur: 64 },
+    regles: { gainMax: 1000000, unite: "points", progression: "acceleree", securiteTousLes: 5, erreur: "descend", jokers: { moitie: 1, indice: 1, passer: 1 }, chrono: 0, melangerReponses: true },
+    sons: { actif: true, volume: 70, suspenseMax: 10, pistes: packDefaut() },
+    jeu: "quiz",
+    champion: reglesChampion(),
+    trouve: trouvesExemple(),
+    questions: [
+      Q("Quelle méthode de révision ancre le mieux un contenu dans la mémoire à long terme ?",
+        ["Relire ses notes plusieurs fois", "Surligner les passages importants", "Se tester sans regarder ses notes", "Recopier le cours au propre"], 2,
+        "La plus efficace est aussi la plus inconfortable.",
+        "Chercher une réponse dans sa mémoire la renforce. Une semaine plus tard, ceux qui se sont testés retiennent nettement plus que ceux qui ont relu.",
+        "Roediger et Karpicke, 2006"),
+      Q("Que décrit la « courbe de l'oubli » ?",
+        ["Un oubli très rapide au début, puis de plus en plus lent", "Un oubli régulier, identique chaque jour", "Un oubli qui ne commence qu'après un mois", "La baisse de la mémoire avec l'âge"], 0,
+        "Pensez à ce qu'il vous reste d'une formation le lendemain, puis un mois après.",
+        "Sans révision, la plus grande partie de l'oubli se produit dans les heures et les jours qui suivent l'apprentissage. Le premier rappel doit donc arriver tôt.",
+        "Ebbinghaus, 1885"),
+      Q("Pour retenir durablement, comment vaut-il mieux répartir trois heures de révision ?",
+        ["En une seule séance, la veille", "En plusieurs séances courtes, espacées de quelques jours", "En deux séances le même jour", "Peu importe, seul le temps total compte"], 1,
+        "Le temps qui passe entre deux séances travaille pour vous.",
+        "C'est l'effet d'espacement : à durée égale, des séances réparties dans le temps donnent un souvenir plus durable qu'une séance unique.",
+        "Cepeda et al., 2006"),
+      Q("Combien d'éléments nouveaux la mémoire de travail peut-elle manipuler en même temps ?",
+        ["Environ 4", "Environ 12", "Environ 20", "Il n'y a pas de limite"], 0,
+        "Moins que le célèbre « sept, plus ou moins deux ».",
+        "La mémoire de travail est très limitée : environ quatre éléments à la fois. D'où l'intérêt de découper un contenu en petites unités.",
+        "Cowan, 2001"),
+      Q("Adapter une formation au « style d'apprentissage » de chacun (visuel, auditif, kinesthésique) améliore-t-il les résultats ?",
+        ["Oui, nettement", "Oui, mais seulement chez les adultes", "Non, aucune preuve solide ne le montre", "Oui, mais seulement pour les visuels"], 2,
+        "C'est l'une des idées reçues les plus répandues en pédagogie.",
+        "Les gens ont des préférences, mais enseigner selon ces préférences n'améliore pas l'apprentissage. Mieux vaut choisir le support selon le contenu à transmettre.",
+        "Pashler et al., 2008"),
+      Q("Quel rôle joue le sommeil après un apprentissage ?",
+        ["Il efface les souvenirs inutiles de la journée, sans autre effet", "Il consolide ce qui vient d'être appris", "Il n'a aucun effet sur la mémoire", "Il ne joue que sur la mémoire des gestes"], 1,
+        "Réviser tard puis dormir peu est un mauvais calcul.",
+        "Pendant le sommeil, le cerveau réactive et stabilise les souvenirs récents. Une nuit écourtée après une formation réduit ce qu'on en retient."),
+      Q("Comment appelle-t-on le fait de mélanger plusieurs types d'exercices au lieu de les enchaîner par blocs ?",
+        ["Le surapprentissage", "La répétition massée", "L'entrelacement", "Le bachotage"], 2,
+        "Le mot évoque des fils que l'on croise.",
+        "L'entrelacement oblige à reconnaître quel savoir utiliser à chaque exercice. Il semble plus difficile sur le moment, mais il améliore la mémorisation et le transfert.",
+        "Rohrer et Taylor, 2007"),
+      Q("Quel retour aide le plus un apprenant après une réponse ?",
+        ["Un simple « juste » ou « faux »", "Une note sur 20", "Une explication de la bonne réponse", "Aucun retour, pour le laisser chercher"], 2,
+        "Regardez ce que ce jeu affiche après chacune de vos réponses.",
+        "Un retour qui explique pourquoi la réponse est juste ou fausse fait progresser davantage qu'un simple verdict."),
+      Q("Vous êtes certain de votre réponse, mais elle est fausse, et on vous corrige. Que devient cette correction ?",
+        ["Elle est vite oubliée", "Elle est particulièrement bien retenue", "Elle est retenue comme n'importe quelle autre", "Elle renforce l'erreur de départ"], 1,
+        "La surprise aide la mémoire.",
+        "C'est l'effet d'hypercorrection : une erreur commise avec assurance, puis corrigée, se retient mieux qu'une erreur faite en hésitant.",
+        "Butterfield et Metcalfe, 2001"),
+      Q("Pourquoi relire un cours donne-t-il souvent l'impression de bien le connaître ?",
+        ["Parce que la relecture est la méthode la plus efficace", "Parce qu'on confond familiarité et maîtrise", "Parce que la mémoire visuelle est infaillible", "Parce que le cerveau retient tout ce qu'il lit deux fois"], 1,
+        "Reconnaître un texte n'est pas savoir le restituer.",
+        "Un texte déjà lu paraît facile, et cette aisance est prise pour du savoir. C'est l'illusion de maîtrise. Seul un test sans support dit ce qu'on sait vraiment.")
+    ]
+  };
+}
+function editionVide() {
+  const e = editionExemple();
+  e.meta = { titre: "Mon jeu", sousTitre: "", messageFin: "", exemple: false, id: nouvelId() };
+  e.questions = [questionVide()];
+  e.sons = { actif: true, volume: 70, suspenseMax: 10, pistes: {} };
+  e.trouve = [];
+  e.jeu = "quiz";
+  e.champion = reglesChampion();
+  return e;
+}
+function questionVide() { return { uid: uid(), enonce: "", reponses: ["", "", "", ""], bonne: 0, indice: "", infoCle: "", source: "", theme: "", niveau: "" }; }
+
+let cfg = chargerBrouillon() || editionExemple();
+let vueApercu = { ecran: "accueil" };
+let partie = null;
+
+/* ---------- utilitaires ---------- */
+function lire(o, chemin) { return chemin.split(".").reduce((a, k) => (a == null ? a : a[k]), o); }
+function ecrire(o, chemin, v) { const p = chemin.split("."); const d = p.pop(); p.reduce((a, k) => (a[k] = a[k] || {}), o)[d] = v; }
+function slug(t) { return (String(t || "quiz").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || "quiz").slice(0, 60); }
+function echapper(t) { return String(t).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])); }
+function normaliserHex(s) {
+  s = String(s == null ? "" : s).trim().replace(/^#/, "");
+  if (/^[0-9a-f]{3}$/i.test(s)) s = s.split("").map((c) => c + c).join("");
+  return /^[0-9a-f]{6}$/i.test(s) ? "#" + s.toUpperCase() : null;
+}
+function probleme(q) {
+  if (!String(q.enonce || "").trim()) return "Énoncé manquant";
+  const pleines = q.reponses.filter((r) => String(r || "").trim()).length;
+  if (pleines < 2) return "Il faut au moins 2 réponses";
+  if (!String(q.reponses[q.bonne] || "").trim()) return "Bonne réponse non cochée";
+  return "";
+}
+const questionsValides = () => cfg.questions.filter((q) => !probleme(q));
+function configPropre(seulementValides) {
+  const c = JSON.parse(JSON.stringify(cfg));
+  c.questions = (seulementValides ? c.questions.filter((q) => !probleme(q)) : c.questions).map((q) => { delete q.uid; return q; });
+  c.trouve = (seulementValides ? c.trouve.filter((x) => !problemeTrouve(x)) : c.trouve).map((x) => { delete x.uid; return x; });
+  if (seulementValides) {
+    const gardees = slotsDuJeu(c.jeu).map((s) => s.cle);
+    Object.keys(c.sons.pistes).forEach((k) => { if (gardees.indexOf(k) < 0) delete c.sons.pistes[k]; });
+  }
+  delete c.meta.exemple;
+  return c;
+}
+function normaliserSons(s, base) {
+  const o = Object.assign({}, base, { pistes: {} });
+  if (s && typeof s === "object") {
+    if (typeof s.actif === "boolean") o.actif = s.actif;
+    if (Number.isFinite(Number(s.volume))) o.volume = Math.max(0, Math.min(100, Number(s.volume)));
+    if (Number.isFinite(Number(s.suspenseMax))) o.suspenseMax = Math.max(0, Number(s.suspenseMax));
+    SLOTS_SON.forEach(({ cle }) => {
+      const p = s.pistes && s.pistes[cle];
+      if (p && typeof p.src === "string" && /^data:audio\//.test(p.src)) o.pistes[cle] = { nom: String(p.nom || cle), src: p.src, duree: Number(p.duree) || null };
+    });
+  }
+  return o;
+}
+function normaliserChampion(s, base) {
+  const o = JSON.parse(JSON.stringify(base));
+  if (!s || typeof s !== "object") return o;
+  if (Array.isArray(s.manches)) o.manches = ["sprint", "serie", "trouve"].filter((m) => s.manches.indexOf(m) >= 0);
+  ["sprint", "serie", "trouve"].forEach((k) => {
+    if (s[k] && typeof s[k] === "object") Object.keys(o[k]).forEach((p) => { if (Number.isFinite(Number(s[k][p]))) o[k][p] = Number(s[k][p]); });
+  });
+  if (typeof s.reposerErreurs === "boolean") o.reposerErreurs = s.reposerErreurs;
+  return o;
+}
+function normaliser(c) {
+  const base = editionVide();
+  const o = {
+    format: "quiz-paliers", version: 1,
+    meta: Object.assign({}, base.meta, c.meta || {}),
+    theme: Object.assign({}, base.theme, c.theme || {}),
+    regles: Object.assign({}, base.regles, c.regles || {}),
+    sons: normaliserSons(c.sons, base.sons),
+    jeu: c.jeu === "champion" ? "champion" : "quiz",
+    champion: normaliserChampion(c.champion, base.champion),
+    trouve: [],
+    questions: []
+  };
+  o.regles.jokers = Object.assign({}, base.regles.jokers, (c.regles && c.regles.jokers) || {});
+  o.questions = (Array.isArray(c.questions) ? c.questions : []).map((q) => {
+    const r = Array.isArray(q.reponses) ? q.reponses.slice(0, 4).map((x) => String(x == null ? "" : x)) : [];
+    while (r.length < 4) r.push("");
+    return { uid: uid(), enonce: String(q.enonce || ""), reponses: r, bonne: Math.max(0, Math.min(3, Number(q.bonne) || 0)), indice: String(q.indice || ""), infoCle: String(q.infoCle || ""), source: String(q.source || ""), theme: String(q.theme || ""), niveau: ["1", "2", "3"].indexOf(String(q.niveau)) >= 0 ? String(q.niveau) : "" };
+  });
+  o.trouve = (Array.isArray(c.trouve) ? c.trouve : []).map((x) => {
+    const ind = Array.isArray(x.indices) ? x.indices.slice(0, 4).map((y) => String(y == null ? "" : y)) : [];
+    while (ind.length < 4) ind.push("");
+    const fx = Array.isArray(x.faux) ? x.faux.slice(0, 3).map((y) => String(y == null ? "" : y)) : [];
+    while (fx.length < 3) fx.push("");
+    return { uid: uid(), theme: String(x.theme || ""), indices: ind, reponse: String(x.reponse || ""), faux: fx, infoCle: String(x.infoCle || ""), source: String(x.source || "") };
+  });
+  if (!o.questions.length) o.questions.push(questionVide());
+  return o;
+}
+function chargerBrouillon() {
+  try {
+    const t = localStorage.getItem(CLE_BROUILLON);
+    if (!t) return null;
+    const c = JSON.parse(t);
+    if (c && c.format === "quiz-paliers") { const ex = c.meta && c.meta.exemple; const o = normaliser(c); o.meta.exemple = !!ex; if (!c.sons && ex) o.sons = editionExemple().sons;
+      if (!c.jeu && ex) {
+        const e = editionExemple();
+        o.trouve = e.trouve;
+        const qp = packDefaut("champion");
+        Object.keys(qp).forEach((k) => { if (!o.sons.pistes[k]) o.sons.pistes[k] = qp[k]; });
+        o.questions.forEach((q, i) => { if (e.questions[i] && q.enonce === e.questions[i].enonce) { q.theme = e.questions[i].theme; q.niveau = e.questions[i].niveau; } });
+      }
+      return o; }
+  } catch (e) {}
+  return null;
+}
+let minuteurBrouillon = null, minuteurApercu = null, minuteurToast = null;
+function sauverBrouillon() {
+  clearTimeout(minuteurBrouillon);
+  minuteurBrouillon = setTimeout(() => {
+    try { localStorage.setItem(CLE_BROUILLON, JSON.stringify(cfg)); return; } catch (e) {}
+    /* Brouillon trop lourd pour le navigateur : on garde les textes et on laisse les sons de côté. */
+    try { const c = JSON.parse(JSON.stringify(cfg)); c.sons.pistes = {}; localStorage.setItem(CLE_BROUILLON, JSON.stringify(c)); } catch (e) {}
+  }, 400);
+}
+function toast(msg) {
+  const t = $("toast"); t.textContent = msg; t.hidden = false;
+  clearTimeout(minuteurToast); minuteurToast = setTimeout(() => { t.hidden = true; }, 5000);
+}
+
+/* ---------- enregistrement de fichiers ---------- */
+const promesseDownloads = (window.claude && typeof window.claude.use === "function") ? window.claude.use("downloads").catch(() => null) : Promise.resolve(null);
+async function enregistrerFichier(nom, donnees, mime) {
+  const dl = await promesseDownloads;
+  if (dl) {
+    try { await dl.save({ filename: nom, data: donnees }); toast("Fichier enregistré : " + nom); return true; }
+    catch (e) {
+      if (e && e.code === "declined") { toast("Enregistrement annulé."); return false; }
+      if (e && e.code === "rate_limited") { toast("Une demande d'enregistrement est déjà ouverte. Réessayez dans un instant."); return false; }
+      toast("L'enregistrement de fichiers n'est pas disponible dans cette vue."); return false;
+    }
+  }
+  try {
+    const url = URL.createObjectURL(new Blob([donnees], { type: mime || "application/octet-stream" }));
+    const a = document.createElement("a"); a.href = url; a.download = nom; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 2000);
+    toast("Téléchargement lancé : " + nom);
+    return true;
+  } catch (e) { toast("Impossible d'enregistrer le fichier ici."); return false; }
+}
+
+/* ---------- export du jeu autonome ---------- */
+function construireExport(c) {
+  if (c.sons && c.sons.actif === false) c.sons = { actif: false, pistes: {} };
+  const champion = c.jeu === "champion";
+  const json = JSON.stringify(c).replace(/</g, "\\u003c");
+  const code = (champion ? [fabriquerEl, appliquerTheme, creerMoteurSons, mountChampion] : [fabriquerEl, appliquerTheme, calculerEchelle, mountQuiz])
+    .map((f) => f.toString()).join("\n");
+  return [
+    "<!DOCTYPE html>", '<html lang="fr">', "<head>", '<meta charset="utf-8">',
+    '<meta name="viewport" content="width=device-width, initial-scale=1">',
+    "<title>" + echapper(c.meta.titre || (champion ? "Champion solo" : "Quiz")) + "</title>",
+    "<style>html,body{height:100%;margin:0}#jeu{height:100%}" + PLAYER_CSS + (champion ? CHAMPION_CSS : "") + "</style>",
+    "</head>", "<body>", '<div id="jeu"></div>', "<script>",
+    "/* Jeu autonome produit par l'Atelier de jeux. Tout le contenu est dans CONFIG. */",
+    "var CONFIG = " + json + ";",
+    "/* Suivi de l'apprenant : reçoit 'debut', 'reponse' et 'fin' (avec le score).",
+    "   Vide pour l'instant. C'est ici qu'un export SCORM branchera l'API du LMS. */",
+    "function suivi(type, donnees) {}",
+    code,
+    (champion ? "mountChampion" : "mountQuiz") + '(document.getElementById("jeu"), CONFIG, { autoFocus: true, touchesGlobales: true, onEvenement: suivi });',
+    "<\/script>", "</body>", "</html>"
+  ].join("\n");
+}
+
+/* ---------- aperçu ---------- */
+const racineOmbre = $("scene").attachShadow({ mode: "open" });
+function monterApercu() {
+  if (partie) partie.detruire();
+  while (racineOmbre.firstChild) racineOmbre.removeChild(racineOmbre.firstChild);
+  const style = document.createElement("style"); style.textContent = PLAYER_CSS + CHAMPION_CSS;
+  const hote = document.createElement("div");
+  racineOmbre.appendChild(style); racineOmbre.appendChild(hote);
+  partie = cfg.jeu === "champion"
+    ? mountChampion(hote, configPropre(true), { depart: vueApercu, autoFocus: false, persistance: false })
+    : mountQuiz(hote, configPropre(true), { depart: vueApercu, autoFocus: false });
+}
+function planifierApercu() { clearTimeout(minuteurApercu); minuteurApercu = setTimeout(monterApercu, 250); }
+const VUES_CHAMPION = [["accueil", "Écran d'accueil"], ["sprint", "Sprint"], ["serie", "La série"], ["trouve", "Trouve avant la fin"], ["fin", "Écran de fin"]];
+function majSelecteurVue() {
+  const s = $("f-vue"), n = questionsValides().length;
+  s.innerHTML = "";
+  const opt = (v, t) => { const o = document.createElement("option"); o.value = v; o.textContent = t; s.appendChild(o); };
+  if (cfg.jeu === "champion") {
+    VUES_CHAMPION.forEach(([v, t]) => opt(v, t));
+    if (!VUES_CHAMPION.some(([v]) => v === vueApercu.ecran)) vueApercu = { ecran: "accueil" };
+    s.value = vueApercu.ecran;
+    return;
+  }
+  opt("accueil", "Écran d'accueil");
+  for (let i = 0; i < n; i++) opt("q" + i, "Question " + (i + 1));
+  if (n) opt("fin", "Écran de fin");
+  if (vueApercu.ecran === "question" && vueApercu.index >= n) vueApercu = { ecran: "accueil" };
+  s.value = vueApercu.ecran === "question" ? "q" + vueApercu.index : vueApercu.ecran;
+}
+function choisirVue(v) {
+  if (cfg.jeu === "champion") vueApercu = { ecran: v };
+  else vueApercu = v === "fin" ? { ecran: "fin" } : v === "accueil" ? { ecran: "accueil" } : { ecran: "question", index: Number(v.slice(1)) };
+  majSelecteurVue(); monterApercu();
+}
+
+/* ---------- dérivés affichés dans l'atelier ---------- */
+function contraste(a, b) {
+  const L = (hex) => {
+    const m = /^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(hex || ""); if (!m) return 0;
+    const c = [1, 2, 3].map((i) => { const v = parseInt(m[i], 16) / 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); });
+    return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2];
+  };
+  const x = L(a), y = L(b);
+  return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05);
+}
+function majDerives() {
+  $("nom-edition").textContent = cfg.meta.titre || "Édition sans titre";
+  $("badge-exemple").hidden = !cfg.meta.exemple;
+  const valides = questionsValides().length, total = cfg.questions.length;
+  $("compte-questions").textContent = "(" + valides + (valides < total ? " sur " + total : "") + ")";
+
+  const t = cfg.theme, soucis = [];
+  if (contraste(t.texte, t.fond) < 4.5) soucis.push("le texte sur le fond");
+  if (contraste(t.texte, t.carte) < 4.5) soucis.push("le texte sur les cartes");
+  if (contraste(t.accent, t.fond) < 3) soucis.push("l'accent sur le fond");
+  const avis = $("avis-contraste");
+  avis.hidden = !soucis.length;
+  avis.textContent = soucis.length ? "Contraste trop faible pour " + soucis.join(", ") + ". Le jeu risque d'être difficile à lire." : "";
+
+  const ol = $("echelle"); ol.innerHTML = "";
+  const ech = calculerEchelle(cfg.regles, valides), pas = Number(cfg.regles.securiteTousLes) || 0;
+  if (!valides) { const li = document.createElement("li"); li.textContent = "Ajoutez des questions pour voir l'échelle."; ol.appendChild(li); }
+  ech.forEach((v, i) => {
+    const li = document.createElement("li"), niv = i + 1;
+    const surete = pas > 0 && niv < valides && niv % pas === 0;
+    li.textContent = niv + ". " + v.toLocaleString("fr-FR") + (cfg.regles.unite ? " " + cfg.regles.unite : "") + (surete ? " · sécurité" : "");
+    if (surete) li.className = "surete";
+    ol.appendChild(li);
+  });
+
+  const img = $("logo-apercu");
+  if (t.logo) { if (img.getAttribute("src") !== t.logo) img.src = t.logo; img.hidden = false; } else { img.hidden = true; img.removeAttribute("src"); }
+  $("btn-logo-retirer").hidden = !t.logo;
+  $("champ-logoh").hidden = !t.logo;
+  $("logoh-val").textContent = "(" + (Number(t.logoHauteur) || 64) + " px)";
+  $("champ-police-perso").hidden = t.police !== "perso";
+  $("vol-val").textContent = "(" + (Number(cfg.sons.volume) || 0) + " %)";
+  const poidsSons = slotsDuJeu().reduce((s, { cle }) => s + (cfg.sons.pistes[cle] ? cfg.sons.pistes[cle].src.length * 0.75 : 0), 0);
+  $("sons-poids").textContent = poidsSons ? "Poids des sons dans le jeu exporté : " + (poidsSons / 1048576).toFixed(1).replace(".", ",") + " Mo." : "Aucun son dans ce jeu.";
+  const themes = [];
+  cfg.questions.concat(cfg.trouve).forEach((x) => { const th = String(x.theme || "").trim(); if (th && themes.indexOf(th) < 0) themes.push(th); });
+  const dl = $("liste-themes");
+  if (dl.dataset.sig !== themes.join("|")) {
+    dl.dataset.sig = themes.join("|"); dl.innerHTML = "";
+    themes.forEach((th) => { const o = document.createElement("option"); o.value = th; dl.appendChild(o); });
+  }
+  const tv = trouvesValides().length;
+  $("compte-trouve").textContent = "(" + tv + (tv < cfg.trouve.length ? " sur " + cfg.trouve.length : "") + ")";
+}
+function apresModif() { sauverBrouillon(); majDerives(); majSelecteurVue(); planifierApercu(); }
+function remplirFormulaire() {
+  document.querySelectorAll("[data-c]").forEach((c) => {
+    const v = lire(cfg, c.dataset.c);
+    if (c.type === "checkbox") c.checked = v !== false; else c.value = v == null ? "" : v;
+  });
+  document.querySelectorAll("[data-hex]").forEach((h) => { h.value = String(lire(cfg, h.dataset.hex) || "").toUpperCase(); });
+  document.querySelectorAll("[data-manche]").forEach((c) => { c.checked = cfg.champion.manches.indexOf(c.dataset.manche) >= 0; });
+}
+
+/* ---------- onglet Questions ---------- */
+function champ(etiquette, controle) {
+  const l = document.createElement("label"); l.className = "champ";
+  const s = document.createElement("span"); s.textContent = etiquette;
+  l.appendChild(s); l.appendChild(controle); return l;
+}
+function controle(tag, q, f, attrs) {
+  const c = document.createElement(tag);
+  c.id = "c-" + q.uid + "-" + f; c.dataset.q = q.uid; c.dataset.f = f;
+  Object.assign(c, attrs || {});
+  return c;
+}
+function carteQuestion(q, i, ouverte) {
+  const d = document.createElement("details"); d.className = "q"; d.dataset.uid = q.uid; d.open = !!ouverte;
+  const s = document.createElement("summary");
+  const pb = probleme(q);
+  s.innerHTML = '<span class="q-n">Q' + (i + 1) + '</span><span class="q-titre"></span><span class="q-etat"></span>';
+  s.querySelector(".q-titre").textContent = q.enonce.trim() || "Question sans énoncé";
+  const etat = s.querySelector(".q-etat"); etat.textContent = pb; etat.hidden = !pb;
+  d.appendChild(s);
+
+  const corps = document.createElement("div"); corps.className = "q-corps";
+  corps.appendChild(champ("Énoncé", controle("textarea", q, "enonce", { value: q.enonce, rows: 2 })));
+
+  const fs = document.createElement("fieldset"); fs.className = "reponses";
+  const lg = document.createElement("legend"); lg.className = "legende"; lg.textContent = "Réponses (cochez la bonne)"; fs.appendChild(lg);
+  q.reponses.forEach((r, k) => {
+    const ligne = document.createElement("div"); ligne.className = "reponse";
+    const radio = controle("input", q, "bonne" + k, { type: "radio", name: "bonne-" + q.uid, value: String(k), checked: q.bonne === k });
+    radio.dataset.f = "bonne"; radio.setAttribute("aria-label", "La réponse " + "ABCD"[k] + " est la bonne");
+    const b = document.createElement("b"); b.textContent = "ABCD"[k];
+    const txt = controle("input", q, "rep" + k, { type: "text", value: r, placeholder: k > 1 ? "Facultatif" : "" });
+    txt.setAttribute("aria-label", "Réponse " + "ABCD"[k]);
+    ligne.appendChild(radio); ligne.appendChild(b); ligne.appendChild(txt); fs.appendChild(ligne);
+  });
+  corps.appendChild(fs);
+  corps.appendChild(champ("Info clé, affichée après la réponse", controle("textarea", q, "infoCle", { value: q.infoCle, rows: 2 })));
+  const g = document.createElement("div"); g.className = "grille";
+  g.appendChild(champ("Indice (joker)", controle("input", q, "indice", { type: "text", value: q.indice })));
+  g.appendChild(champ("Source (facultatif)", controle("input", q, "source", { type: "text", value: q.source })));
+  if (cfg.jeu === "champion") {
+    const th = controle("input", q, "theme", { type: "text", value: q.theme, placeholder: "Par exemple Sécurité" });
+    th.setAttribute("list", "liste-themes");
+    g.appendChild(champ("Thème", th));
+    const nv = controle("select", q, "niveau", {});
+    [["1", "1 point · découverte"], ["2", "2 points · maîtrise"], ["3", "3 points · expert"]].forEach(([v, lib]) => { const o = document.createElement("option"); o.value = v; o.textContent = lib; nv.appendChild(o); });
+    nv.value = ["1", "2", "3"].indexOf(String(q.niveau)) >= 0 ? String(q.niveau) : "1";
+    g.appendChild(champ("Niveau de difficulté", nv));
+  }
+  corps.appendChild(g);
+
+  const act = document.createElement("div"); act.className = "rangee";
+  const btn = (texte, action, cls, off) => { const b = document.createElement("button"); b.type = "button"; b.textContent = texte; b.className = "discret " + (cls || ""); b.dataset.action = action; b.dataset.q = q.uid; b.disabled = !!off; act.appendChild(b); };
+  btn("Monter", "monter", "", i === 0);
+  btn("Descendre", "descendre", "", i === cfg.questions.length - 1);
+  btn("Dupliquer", "dupliquer");
+  btn("Supprimer", "supprimer", "danger", cfg.questions.length <= 1);
+  corps.appendChild(act);
+  d.appendChild(corps);
+  return d;
+}
+function rendreQuestions(uidOuvert) {
+  const l = $("liste-questions"); l.innerHTML = "";
+  cfg.questions.forEach((q, i) => l.appendChild(carteQuestion(q, i, q.uid === uidOuvert)));
+}
+function montrerDansApercu(uidQ) {
+  if (cfg.jeu === "champion") {
+    if (vueApercu.ecran !== "sprint") { vueApercu = { ecran: "sprint" }; majSelecteurVue(); planifierApercu(); }
+    return;
+  }
+  const idx = questionsValides().findIndex((q) => q.uid === uidQ);
+  if (idx < 0) return;
+  if (vueApercu.ecran === "question" && vueApercu.index === idx) return;
+  vueApercu = { ecran: "question", index: idx };
+  majSelecteurVue(); planifierApercu();
+}
+
+/* ---------- onglet Questions : « Trouve avant la fin » ---------- */
+function trouveVide() { return { uid: uid(), theme: "", indices: ["", "", "", ""], reponse: "", faux: ["", "", ""], infoCle: "", source: "" }; }
+function problemeTrouve(x) {
+  if (x.indices.some((y) => !String(y || "").trim())) return "Les 4 indices sont nécessaires";
+  if (!String(x.reponse || "").trim()) return "Réponse manquante";
+  if (x.faux.filter((y) => String(y || "").trim()).length < 2) return "Il faut au moins 2 propositions fausses";
+  return "";
+}
+function trouvesValides() { return cfg.trouve.filter((x) => !problemeTrouve(x)); }
+function controleT(tag, x, f, attrs) {
+  const c = document.createElement(tag);
+  c.id = "c-" + x.uid + "-" + f; c.dataset.t = x.uid; c.dataset.f = f;
+  Object.assign(c, attrs || {});
+  return c;
+}
+function titreTrouve(x) { return x.reponse.trim() || x.indices[0].trim() || "Concept sans réponse"; }
+function carteTrouve(x, i, ouverte) {
+  const d = document.createElement("details"); d.className = "q"; d.dataset.uid = x.uid; d.open = !!ouverte;
+  const s = document.createElement("summary"), pb = problemeTrouve(x);
+  s.innerHTML = '<span class="q-n">C' + (i + 1) + '</span><span class="q-titre"></span><span class="q-etat"></span>';
+  s.querySelector(".q-titre").textContent = titreTrouve(x);
+  const et = s.querySelector(".q-etat"); et.textContent = pb; et.hidden = !pb;
+  d.appendChild(s);
+  const corps = document.createElement("div"); corps.className = "q-corps";
+  const g = document.createElement("div"); g.className = "grille";
+  const th = controleT("input", x, "theme", { type: "text", value: x.theme, placeholder: "Par exemple Sécurité" });
+  th.setAttribute("list", "liste-themes");
+  g.appendChild(champ("Thème", th));
+  g.appendChild(champ("Réponse à trouver", controleT("input", x, "reponse", { type: "text", value: x.reponse })));
+  corps.appendChild(g);
+  const noms = ["Indice 1, le plus difficile (4 points)", "Indice 2 (3 points)", "Indice 3 (2 points)", "Indice 4, le plus facile (1 point)"];
+  x.indices.forEach((y, k) => corps.appendChild(champ(noms[k], controleT("textarea", x, "ind" + k, { value: y, rows: 2 }))));
+  const fs = document.createElement("fieldset"); fs.className = "reponses";
+  const lg = document.createElement("legend"); lg.className = "legende"; lg.textContent = "Fausses propositions (2 à 3), mélangées à la bonne réponse"; fs.appendChild(lg);
+  x.faux.forEach((y, k) => {
+    const c = controleT("input", x, "faux" + k, { type: "text", value: y, placeholder: k > 1 ? "Facultatif" : "" });
+    c.setAttribute("aria-label", "Fausse proposition " + (k + 1)); fs.appendChild(c);
+  });
+  corps.appendChild(fs);
+  corps.appendChild(champ("Info clé, affichée après la réponse", controleT("textarea", x, "infoCle", { value: x.infoCle, rows: 2 })));
+  corps.appendChild(champ("Source (facultatif)", controleT("input", x, "source", { type: "text", value: x.source })));
+  const act = document.createElement("div"); act.className = "rangee";
+  [["Dupliquer", "dupliquer", ""], ["Supprimer", "supprimer", "danger"]].forEach(([texte, action, cls]) => {
+    const b = document.createElement("button"); b.type = "button"; b.textContent = texte; b.className = "discret " + cls; b.dataset.action = action; b.dataset.t = x.uid; act.appendChild(b);
+  });
+  corps.appendChild(act);
+  d.appendChild(corps);
+  return d;
+}
+function rendreTrouve(uidOuvert) {
+  const l = $("liste-trouve"); l.innerHTML = "";
+  if (!cfg.trouve.length) { const p = document.createElement("p"); p.className = "aide"; p.textContent = "Aucun concept pour l'instant."; l.appendChild(p); }
+  cfg.trouve.forEach((x, i) => l.appendChild(carteTrouve(x, i, x.uid === uidOuvert)));
+}
+function montrerTrouveApercu() {
+  if (cfg.jeu !== "champion" || vueApercu.ecran === "trouve") return;
+  vueApercu = { ecran: "trouve" }; majSelecteurVue(); planifierApercu();
+}
+$("liste-trouve").addEventListener("focusin", (e) => { if (e.target.closest(".q")) montrerTrouveApercu(); });
+$("liste-trouve").addEventListener("click", (e) => {
+  const b = e.target.closest("button[data-action]"); if (!b) return;
+  const i = cfg.trouve.findIndex((x) => x.uid === b.dataset.t); if (i < 0) return;
+  const a = b.dataset.action; let ouvert = cfg.trouve[i].uid;
+  if (a === "dupliquer") { const c = JSON.parse(JSON.stringify(cfg.trouve[i])); c.uid = uid(); cfg.trouve.splice(i + 1, 0, c); ouvert = c.uid; }
+  else if (a === "supprimer") {
+    if (b.dataset.confirme !== "1") { b.dataset.confirme = "1"; b.textContent = "Confirmer la suppression"; setTimeout(() => { if (b.isConnected) { b.dataset.confirme = ""; b.textContent = "Supprimer"; } }, 4000); return; }
+    cfg.trouve.splice(i, 1); ouvert = null;
+  }
+  rendreTrouve(ouvert); apresModif();
+});
+$("btn-ajouter-trouve").addEventListener("click", () => {
+  const x = trouveVide(); cfg.trouve.push(x); rendreTrouve(x.uid); apresModif();
+  const c = $("c-" + x.uid + "-reponse"); if (c) c.focus();
+});
+function majTypeJeu() {
+  vueApercu = { ecran: "accueil" };
+  document.querySelectorAll("[data-jeu]").forEach((e) => { e.hidden = e.dataset.jeu !== cfg.jeu; });
+  rendreQuestions(null); rendreTrouve(null); rendreSons();
+}
+
+/* ---------- import Excel / CSV ---------- */
+const EN_TETES = ["question", "reponse_A", "reponse_B", "reponse_C", "reponse_D", "bonne", "indice", "info_cle", "niveau", "source", "theme"];
+const EN_TETES_TROUVE = ["theme", "indice_1", "indice_2", "indice_3", "indice_4", "reponse", "faux_1", "faux_2", "faux_3", "info_cle", "source"];
+function lireCSV(txt) {
+  txt = txt.replace(/^﻿/, "");
+  const l1 = txt.split(/\r?\n/, 1)[0];
+  const nb = (s) => l1.split(s).length;
+  const sep = nb(";") > nb(",") && nb(";") >= nb("\t") ? ";" : nb("\t") > nb(",") ? "\t" : ",";
+  const lignes = []; let ligne = [], cur = "", guillemets = false;
+  for (let i = 0; i < txt.length; i++) {
+    const c = txt[i];
+    if (guillemets) {
+      if (c === '"') { if (txt[i + 1] === '"') { cur += '"'; i++; } else guillemets = false; }
+      else cur += c;
+    } else if (c === '"') guillemets = true;
+    else if (c === sep) { ligne.push(cur); cur = ""; }
+    else if (c === "\n" || c === "\r") {
+      if (c === "\r" && txt[i + 1] === "\n") i++;
+      ligne.push(cur); cur = ""; lignes.push(ligne); ligne = [];
+    } else cur += c;
+  }
+  if (cur !== "" || ligne.length) { ligne.push(cur); lignes.push(ligne); }
+  return lignes;
+}
+function lignesVersQuestions(lignes) {
+  const norm = (h) => String(h == null ? "" : h).normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().trim().replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "");
+  const tete = (lignes[0] || []).map(norm);
+  const col = (...noms) => { for (const nm of noms) { const i = tete.indexOf(nm); if (i >= 0) return i; } return -1; };
+  const cQ = col("question", "enonce", "intitule");
+  const cR = [col("reponse_a", "a", "reponse_1"), col("reponse_b", "b", "reponse_2"), col("reponse_c", "c", "reponse_3"), col("reponse_d", "d", "reponse_4")];
+  const cB = col("bonne", "bonne_reponse", "reponse_correcte", "correcte");
+  const cI = col("indice"), cK = col("info_cle", "infocle", "a_retenir", "explication"), cN = col("niveau"), cS = col("source"), cT = col("theme", "categorie", "thematique");
+  if (cQ < 0 || cR[0] < 0 || cR[1] < 0 || cB < 0) {
+    return { questions: [], erreurs: [], fatal: "Colonnes introuvables. La première ligne doit contenir au moins : question, reponse_A, reponse_B, bonne. Le plus simple est de repartir du modèle." };
+  }
+  const questions = [], erreurs = [];
+  for (let r = 1; r < lignes.length; r++) {
+    const L = lignes[r] || [], v = (i) => (i < 0 ? "" : String(L[i] == null ? "" : L[i]).trim());
+    if (!L.some((x) => String(x == null ? "" : x).trim())) continue;
+    const n = r + 1, enonce = v(cQ), rep = cR.map(v), b = v(cB);
+    if (!enonce) { erreurs.push("Ligne " + n + " : énoncé manquant."); continue; }
+    if (rep.filter(Boolean).length < 2) { erreurs.push("Ligne " + n + " : il faut au moins 2 réponses."); continue; }
+    let bonne = "ABCD".indexOf(b.toUpperCase());
+    if (b.length !== 1 || bonne < 0) bonne = "1234".indexOf(b);
+    if (b.length !== 1 || bonne < 0) bonne = rep.findIndex((x) => x && x.toLowerCase() === b.toLowerCase());
+    if (bonne < 0) { erreurs.push("Ligne " + n + " : bonne réponse illisible (« " + b + " »). Indiquez A, B, C ou D."); continue; }
+    if (!rep[bonne]) { erreurs.push("Ligne " + n + " : la bonne réponse désigne une case vide."); continue; }
+    questions.push({ uid: uid(), enonce, reponses: rep, bonne, indice: v(cI), infoCle: v(cK), source: v(cS), theme: v(cT), niveau: ["1", "2", "3"].indexOf(v(cN)) >= 0 ? v(cN) : "" });
+  }
+  return { questions, erreurs, fatal: "" };
+}
+let importEnAttente = null;
+function normEntete(h) { return String(h == null ? "" : h).normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().trim().replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, ""); }
+function lignesVersTrouve(lignes) {
+  const tete = (lignes[0] || []).map(normEntete);
+  const col = (...noms) => { for (const nm of noms) { const i = tete.indexOf(nm); if (i >= 0) return i; } return -1; };
+  const cI = [1, 2, 3, 4].map((k) => col("indice_" + k));
+  const cR = col("reponse", "bonne_reponse");
+  const cF = [1, 2, 3].map((k) => col("faux_" + k, "fausse_" + k, "mauvaise_reponse_" + k));
+  const cT = col("theme", "categorie", "thematique"), cK = col("info_cle", "infocle", "a_retenir", "explication"), cS = col("source");
+  if (cI.some((i) => i < 0) || cR < 0 || cF[0] < 0 || cF[1] < 0) {
+    return { trouve: [], erreurs: [], fatal: "Colonnes introuvables. La feuille « Trouve avant la fin » doit contenir : theme, indice_1 à indice_4, reponse, faux_1, faux_2. Le plus simple est de repartir du modèle." };
+  }
+  const trouve = [], erreurs = [];
+  for (let r = 1; r < lignes.length; r++) {
+    const L = lignes[r] || [], v = (i) => (i < 0 ? "" : String(L[i] == null ? "" : L[i]).trim());
+    if (!L.some((x) => String(x == null ? "" : x).trim())) continue;
+    const n = r + 1, ind = cI.map(v), faux = cF.map(v);
+    if (ind.some((x) => !x)) { erreurs.push("Ligne " + n + " : les 4 indices sont nécessaires."); continue; }
+    if (!v(cR)) { erreurs.push("Ligne " + n + " : réponse manquante."); continue; }
+    if (faux.filter(Boolean).length < 2) { erreurs.push("Ligne " + n + " : il faut au moins 2 propositions fausses."); continue; }
+    trouve.push({ uid: uid(), theme: v(cT), indices: ind, reponse: v(cR), faux, infoCle: v(cK), source: v(cS) });
+  }
+  return { trouve, erreurs, fatal: "" };
+}
+function analyserFeuilles(feuilles) {
+  const res = { questions: [], trouve: [], erreurs: [], fatal: "" };
+  let reconnue = false;
+  feuilles.forEach(({ nom, lignes }) => {
+    const tete = (lignes[0] || []).map(normEntete);
+    let r;
+    if (tete.indexOf("indice_1") >= 0) { r = lignesVersTrouve(lignes); r.trouve.forEach((x) => res.trouve.push(x)); }
+    else if (tete.indexOf("question") >= 0 || tete.indexOf("enonce") >= 0 || tete.indexOf("intitule") >= 0) { r = lignesVersQuestions(lignes); r.questions.forEach((x) => res.questions.push(x)); }
+    else return;
+    reconnue = true;
+    if (r.fatal) res.erreurs.push(r.fatal);
+    r.erreurs.forEach((m) => res.erreurs.push(feuilles.length > 1 && nom ? m.replace(/^Ligne (\d+)/, "Ligne $1 (" + nom + ")") : m));
+  });
+  if (!reconnue) res.fatal = "Colonnes introuvables. La première ligne doit contenir au moins : question, reponse_A, reponse_B, bonne. Le plus simple est de repartir du modèle.";
+  return res;
+}
+function afficherBilanImport(res, nomFichier) {
+  const zone = $("import-bilan"); zone.innerHTML = ""; zone.hidden = false;
+  const p = document.createElement("p");
+  if (res.fatal) { p.textContent = res.fatal; zone.appendChild(p); importEnAttente = null; return; }
+  const nq = res.questions.length, nt = res.trouve.length, morceaux = [];
+  if (nq) morceaux.push(nq + (nq > 1 ? " questions lues" : " question lue"));
+  if (nt) morceaux.push(nt + (nt > 1 ? " concepts lus" : " concept lu"));
+  p.textContent = nomFichier + " : " + (morceaux.join(" et ") || "rien à importer") + (res.erreurs.length ? ", " + res.erreurs.length + (res.erreurs.length > 1 ? " lignes ignorées." : " ligne ignorée.") : ".");
+  zone.appendChild(p);
+  if (res.erreurs.length) {
+    const ul = document.createElement("ul");
+    res.erreurs.slice(0, 12).forEach((e) => { const li = document.createElement("li"); li.textContent = e; ul.appendChild(li); });
+    if (res.erreurs.length > 12) { const li = document.createElement("li"); li.textContent = "… et " + (res.erreurs.length - 12) + " autres."; ul.appendChild(li); }
+    zone.appendChild(ul);
+  }
+  if (!nq && !nt) { importEnAttente = null; return; }
+  importEnAttente = { questions: res.questions, trouve: res.trouve };
+  const r = document.createElement("div"); r.className = "rangee"; r.style.marginTop = "10px";
+  [["Remplacer le contenu actuel", "remplacer", "principal"], ["Ajouter à la suite", "ajouter", ""], ["Annuler", "annuler", "discret"]].forEach(([t, a, c]) => {
+    const b = document.createElement("button"); b.type = "button"; b.textContent = t; b.className = c; b.dataset.import = a; r.appendChild(b);
+  });
+  zone.appendChild(r);
+}
+async function importerFichier(f) {
+  try {
+    const buf = await f.arrayBuffer();
+    let feuilles;
+    if (/\.csv$/i.test(f.name) || /csv|text\/plain/.test(f.type)) {
+      let txt;
+      try { txt = new TextDecoder("utf-8", { fatal: true }).decode(buf); } catch (e) { txt = new TextDecoder("windows-1252").decode(buf); }
+      feuilles = [{ nom: "", lignes: lireCSV(txt) }];
+    } else {
+      if (typeof XLSX === "undefined") { afficherBilanImport({ fatal: "La lecture des fichiers Excel n'a pas pu se charger. Enregistrez votre feuille au format CSV et importez ce fichier." }, f.name); return; }
+      const wb = XLSX.read(buf, { type: "array" });
+      feuilles = wb.SheetNames.map((nom) => ({ nom, lignes: XLSX.utils.sheet_to_json(wb.Sheets[nom], { header: 1, defval: "", raw: false }) }));
+    }
+    afficherBilanImport(analyserFeuilles(feuilles), f.name);
+  } catch (e) {
+    afficherBilanImport({ fatal: "Ce fichier n'a pas pu être lu. Vérifiez qu'il s'agit bien d'un fichier .xlsx ou .csv." }, f.name);
+  }
+}
+function telechargerModele() {
+  const exQ = [
+    ["Quelle est la capitale de l'Australie ?", "Sydney", "Canberra", "Melbourne", "Perth", "B", "Ce n'est pas la plus grande ville du pays.", "Canberra est la capitale depuis 1913, choisie comme compromis entre Sydney et Melbourne.", 1, "", "Géographie"],
+    ["Combien de continents compte-t-on habituellement ?", "5", "6", "7", "", "C", "", "Exemple avec trois réponses seulement : laissez reponse_D vide.", 2, "", "Géographie"]
+  ];
+  const exT = [
+    ["Géographie", "Cette ville n'est ni la plus grande ni la plus connue du pays.", "Elle a été construite de toutes pièces au XXe siècle.", "Elle a été choisie comme compromis entre deux grandes villes rivales.", "C'est la capitale de l'Australie.", "Canberra", "Sydney", "Melbourne", "Perth", "Canberra est la capitale depuis 1913, choisie comme compromis entre Sydney et Melbourne.", ""]
+  ];
+  const aide = [
+    ["Mode d'emploi"], [""],
+    ["Feuille « Questions » : une ligne par question à choix. Ne modifiez pas la première ligne."],
+    ["question : l'énoncé (obligatoire)."],
+    ["reponse_A à reponse_D : les réponses proposées. Deux au minimum, C et D peuvent rester vides."],
+    ["bonne : la lettre de la bonne réponse, A, B, C ou D (obligatoire)."],
+    ["indice : texte affiché si le joueur utilise le joker Indice du quiz à paliers (facultatif)."],
+    ["info_cle : ce qu'il faut retenir, affiché après chaque réponse. C'est le cœur pédagogique du jeu."],
+    ["niveau : 1, 2 ou 3. Dans le Champion solo, c'est le nombre de points d'une bonne réponse (facultatif, 1 par défaut)."],
+    ["source : référence affichée sous l'info clé (facultatif)."],
+    ["theme : le thème de la question, utilisé par le Champion solo (facultatif)."],
+    [""],
+    ["Feuille « Trouve avant la fin » : un concept par ligne, pour le Champion solo."],
+    ["indice_1 à indice_4 : quatre indices, du plus difficile au plus facile. reponse : le concept à trouver. faux_1 à faux_3 : fausses propositions (2 au minimum)."],
+    [""], ["Supprimez les lignes d'exemple avant d'importer."]
+  ];
+  if (typeof XLSX !== "undefined") {
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.aoa_to_sheet([EN_TETES].concat(exQ));
+    ws["!cols"] = [{ wch: 50 }, { wch: 22 }, { wch: 22 }, { wch: 22 }, { wch: 22 }, { wch: 7 }, { wch: 36 }, { wch: 60 }, { wch: 8 }, { wch: 22 }, { wch: 18 }];
+    XLSX.utils.book_append_sheet(wb, ws, "Questions");
+    const wt = XLSX.utils.aoa_to_sheet([EN_TETES_TROUVE].concat(exT));
+    wt["!cols"] = [{ wch: 18 }, { wch: 44 }, { wch: 44 }, { wch: 44 }, { wch: 44 }, { wch: 22 }, { wch: 18 }, { wch: 18 }, { wch: 18 }, { wch: 60 }, { wch: 22 }];
+    XLSX.utils.book_append_sheet(wb, wt, "Trouve avant la fin");
+    const wa = XLSX.utils.aoa_to_sheet(aide); wa["!cols"] = [{ wch: 110 }];
+    XLSX.utils.book_append_sheet(wb, wa, "Mode d'emploi");
+    const buf = XLSX.write(wb, { bookType: "xlsx", type: "array" });
+    enregistrerFichier("modele-questions-jeu.xlsx", new Blob([buf]), "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+  } else {
+    const csv = "﻿" + [EN_TETES].concat(exQ).map((l) => l.map((c) => '"' + String(c).replace(/"/g, '""') + '"').join(";")).join("\r\n");
+    enregistrerFichier("modele-questions-jeu.csv", csv, "text/csv");
+  }
+}
+
+/* ---------- onglets ---------- */
+let ongletActif = "identite";
+const large = window.matchMedia("(min-width:1080px)");
+function majOnglets() {
+  const estLarge = large.matches;
+  if (estLarge && ongletActif === "apercu") ongletActif = "identite";
+  ["identite", "questions", "regles", "sons"].forEach((o) => { $("p-" + o).hidden = ongletActif !== o; });
+  $("p-apercu").hidden = !estLarge && ongletActif !== "apercu";
+  $("tab-apercu").hidden = estLarge;
+  document.querySelectorAll(".onglets button").forEach((b) => b.setAttribute("aria-selected", b.dataset.onglet === ongletActif ? "true" : "false"));
+  try { localStorage.setItem("atelier-quiz-onglet", ongletActif); } catch (e) {}
+}
+
+/* ---------- événements ---------- */
+document.querySelector(".onglets").addEventListener("click", (e) => {
+  const b = e.target.closest("button[data-onglet]"); if (!b) return;
+  ongletActif = b.dataset.onglet; majOnglets();
+});
+large.addEventListener("change", majOnglets);
+
+function surSaisie(e) {
+  const t = e.target;
+  if (t.dataset.manche) {
+    cfg.champion.manches = ["sprint", "serie", "trouve"].filter((m) => { const c = document.querySelector('[data-manche="' + m + '"]'); return c && c.checked; });
+    apresModif();
+    return;
+  }
+  if (t.dataset.t && t.dataset.f) {
+    const x = cfg.trouve.find((y) => y.uid === t.dataset.t); if (!x) return;
+    const f = t.dataset.f;
+    if (f.slice(0, 3) === "ind") x.indices[Number(f.slice(3))] = t.value;
+    else if (f.slice(0, 4) === "faux") x.faux[Number(f.slice(4))] = t.value;
+    else x[f] = t.value;
+    const carte = t.closest(".q"), pb = problemeTrouve(x);
+    carte.querySelector(".q-titre").textContent = titreTrouve(x);
+    const et = carte.querySelector(".q-etat"); et.textContent = pb; et.hidden = !pb;
+    apresModif();
+    montrerTrouveApercu();
+    return;
+  }
+  if (t.dataset.hex) {
+    const hex = normaliserHex(t.value), chemin = t.dataset.hex;
+    if (hex) {
+      ecrire(cfg, chemin, hex);
+      const sel = document.querySelector('input[type=color][data-c="' + chemin + '"]');
+      if (sel) sel.value = hex.toLowerCase();
+      if (e.type === "change") t.value = hex;
+      apresModif();
+    } else if (e.type === "change") {
+      t.value = String(lire(cfg, chemin) || "").toUpperCase();
+      toast("Code couleur non reconnu. Saisissez 6 caractères, par exemple #0E3B43.");
+    }
+    return;
+  }
+  if (t.dataset.c) {
+    let v = t.type === "checkbox" ? t.checked : (t.type === "number" || t.dataset.num) ? Number(t.value) : t.value;
+    if (t.dataset.c === "regles.gainMax") v = Math.max(1, Math.round(v) || 1);
+    ecrire(cfg, t.dataset.c, v);
+    if (t.type === "color") { const h = document.querySelector('[data-hex="' + t.dataset.c + '"]'); if (h) h.value = String(v).toUpperCase(); }
+    if (t.dataset.c === "meta.titre") cfg.meta.exemple = false;
+    if (t.dataset.c === "jeu") majTypeJeu();
+    apresModif();
+    return;
+  }
+  if (t.dataset.q && t.dataset.f) {
+    const q = cfg.questions.find((x) => x.uid === t.dataset.q); if (!q) return;
+    const f = t.dataset.f;
+    if (f === "bonne") q.bonne = Number(t.value);
+    else if (f.slice(0, 3) === "rep") q.reponses[Number(f.slice(3))] = t.value;
+    else q[f] = t.value;
+    const carte = t.closest(".q"), pb = probleme(q);
+    carte.querySelector(".q-titre").textContent = q.enonce.trim() || "Question sans énoncé";
+    const et = carte.querySelector(".q-etat"); et.textContent = pb; et.hidden = !pb;
+    apresModif();
+    montrerDansApercu(q.uid);
+  }
+}
+document.addEventListener("input", surSaisie);
+document.addEventListener("change", surSaisie);
+
+$("liste-questions").addEventListener("focusin", (e) => { const c = e.target.closest(".q"); if (c) montrerDansApercu(c.dataset.uid); });
+$("liste-questions").addEventListener("click", (e) => {
+  const b = e.target.closest("button[data-action]"); if (!b) return;
+  const i = cfg.questions.findIndex((q) => q.uid === b.dataset.q); if (i < 0) return;
+  const q = cfg.questions[i], a = b.dataset.action;
+  let ouvert = q.uid;
+  if (a === "monter" && i > 0) { cfg.questions.splice(i, 1); cfg.questions.splice(i - 1, 0, q); }
+  else if (a === "descendre" && i < cfg.questions.length - 1) { cfg.questions.splice(i, 1); cfg.questions.splice(i + 1, 0, q); }
+  else if (a === "dupliquer") { const c = JSON.parse(JSON.stringify(q)); c.uid = uid(); cfg.questions.splice(i + 1, 0, c); ouvert = c.uid; }
+  else if (a === "supprimer") {
+    if (b.dataset.confirme !== "1") { b.dataset.confirme = "1"; b.textContent = "Confirmer la suppression"; setTimeout(() => { if (b.isConnected) { b.dataset.confirme = ""; b.textContent = "Supprimer"; } }, 4000); return; }
+    cfg.questions.splice(i, 1); ouvert = null;
+  }
+  rendreQuestions(ouvert); apresModif();
+});
+$("btn-ajouter").addEventListener("click", () => {
+  const q = questionVide(); cfg.questions.push(q); rendreQuestions(q.uid); apresModif();
+  const c = $("c-" + q.uid + "-enonce"); if (c) c.focus();
+});
+
+$("btn-modele").addEventListener("click", telechargerModele);
+$("btn-importer").addEventListener("click", () => $("fichier-import").click());
+$("fichier-import").addEventListener("change", (e) => { const f = e.target.files[0]; e.target.value = ""; if (f) importerFichier(f); });
+$("import-bilan").addEventListener("click", (e) => {
+  const b = e.target.closest("button[data-import]"); if (!b) return;
+  const a = b.dataset.import;
+  if (a !== "annuler" && importEnAttente) {
+    const { questions, trouve } = importEnAttente;
+    if (questions.length) cfg.questions = a === "remplacer" ? questions : cfg.questions.concat(questions);
+    if (trouve.length) cfg.trouve = a === "remplacer" ? trouve : cfg.trouve.concat(trouve);
+    if (a === "remplacer") cfg.meta.exemple = false;
+    rendreQuestions(null); rendreTrouve(null); apresModif();
+    const morceaux = [];
+    if (questions.length) morceaux.push(questions.length + (questions.length > 1 ? " questions" : " question"));
+    if (trouve.length) morceaux.push(trouve.length + (trouve.length > 1 ? " concepts" : " concept"));
+    toast(morceaux.join(" et ") + " importé" + (questions.length + trouve.length > 1 ? "s." : "."));
+  }
+  importEnAttente = null; $("import-bilan").hidden = true;
+});
+
+const palettes = $("palettes");
+PALETTES.forEach((p, i) => {
+  const b = document.createElement("button"); b.type = "button"; b.dataset.palette = String(i);
+  const s = document.createElement("span"); s.className = "pastilles";
+  [p.fond, p.carte, p.accent].forEach((c) => { const x = document.createElement("i"); x.style.background = c; s.appendChild(x); });
+  b.appendChild(s); b.appendChild(document.createTextNode(p.nom)); palettes.appendChild(b);
+});
+palettes.addEventListener("click", (e) => {
+  const b = e.target.closest("button[data-palette]"); if (!b) return;
+  const p = PALETTES[Number(b.dataset.palette)];
+  Object.assign(cfg.theme, { fond: p.fond, carte: p.carte, texte: p.texte, accent: p.accent });
+  remplirFormulaire(); apresModif();
+});
+
+/* sons : un emplacement par événement du jeu */
+let sonLu = null, lecteurSon = null, cibleSon = null;
+function arreterLecteur() { if (lecteurSon) { try { lecteurSon.onended = null; lecteurSon.pause(); } catch (e) {} } lecteurSon = null; sonLu = null; }
+function rendreSons() {
+  const zone = $("liste-sons"); zone.innerHTML = "";
+  slotsDuJeu().forEach(({ cle, titre, quand }) => {
+    const p = cfg.sons.pistes[cle];
+    const bloc = document.createElement("div"); bloc.className = "bloc";
+    const h = document.createElement("h3"); h.textContent = titre;
+    const q = document.createElement("p"); q.className = "aide"; q.textContent = quand;
+    const nom = document.createElement("p"); nom.className = "son-nom";
+    nom.textContent = p ? p.nom + (p.duree ? " · " + String(p.duree).replace(".", ",") + " s" : "") : "Aucun son : cet événement reste silencieux.";
+    const act = document.createElement("div"); act.className = "rangee";
+    const bouton = (texte, action, cls) => { const b = document.createElement("button"); b.type = "button"; b.textContent = texte; b.className = cls || ""; b.dataset.action = action; b.dataset.cle = cle; act.appendChild(b); };
+    if (p) bouton(sonLu === cle ? "Arrêter" : "Écouter", "ecouter", sonLu === cle ? "principal" : "");
+    bouton(p ? "Remplacer le fichier" : "Choisir un fichier", "choisir");
+    if (p) bouton("Retirer", "retirer", "discret");
+    [h, q, nom, act].forEach((x) => bloc.appendChild(x)); zone.appendChild(bloc);
+  });
+}
+function ecouterSon(cle) {
+  if (sonLu === cle) { arreterLecteur(); rendreSons(); return; }
+  arreterLecteur();
+  const p = cfg.sons.pistes[cle]; if (!p) return;
+  const a = new Audio(p.src); a.volume = Math.max(0, Math.min(1, (Number(cfg.sons.volume) || 0) / 100));
+  lecteurSon = a; sonLu = cle;
+  a.onended = () => { if (lecteurSon === a) { lecteurSon = null; sonLu = null; rendreSons(); } };
+  const pr = a.play();
+  if (pr && pr.catch) pr.catch(() => { if (lecteurSon === a) { arreterLecteur(); rendreSons(); toast("Ce son n'a pas pu être lu par le navigateur."); } });
+  rendreSons();
+}
+$("liste-sons").addEventListener("click", (e) => {
+  const b = e.target.closest("button[data-action]"); if (!b) return;
+  const cle = b.dataset.cle;
+  if (b.dataset.action === "ecouter") ecouterSon(cle);
+  else if (b.dataset.action === "choisir") { cibleSon = cle; $("fichier-son").click(); }
+  else if (b.dataset.action === "retirer") { arreterLecteur(); delete cfg.sons.pistes[cle]; rendreSons(); apresModif(); }
+});
+$("fichier-son").addEventListener("change", (e) => {
+  const f = e.target.files[0], cle = cibleSon; e.target.value = ""; if (!f || !cle) return;
+  if (!/^audio\//.test(f.type) && !/\.(mp3|ogg|wav|m4a|aac)$/i.test(f.name)) { toast("Ce fichier n'est pas un son. Choisissez un mp3, ogg, wav ou m4a."); return; }
+  if (f.size > 2 * 1024 * 1024) { toast("Ce son pèse plus de 2 Mo. Choisissez un fichier plus court ou plus léger."); return; }
+  const r = new FileReader();
+  r.onload = () => {
+    let src = String(r.result);
+    if (!/^data:audio\//.test(src)) src = src.replace(/^data:[^;,]*/, "data:audio/mpeg");
+    arreterLecteur();
+    cfg.sons.pistes[cle] = { nom: f.name, src, duree: null };
+    rendreSons(); apresModif();
+    const a = new Audio(src);
+    a.onloadedmetadata = () => { const p = cfg.sons.pistes[cle]; if (p && p.src === src && isFinite(a.duration)) { p.duree = Math.round(a.duration * 10) / 10; rendreSons(); sauverBrouillon(); } };
+    a.onerror = () => { const p = cfg.sons.pistes[cle]; if (p && p.src === src) { delete cfg.sons.pistes[cle]; rendreSons(); apresModif(); toast("Ce fichier n'a pas pu être lu comme un son."); } };
+  };
+  r.onerror = () => toast("Ce fichier n'a pas pu être lu.");
+  r.readAsDataURL(f);
+});
+$("btn-pack").addEventListener("click", () => {
+  const p = packDefaut(cfg.jeu);
+  if (!Object.keys(p).length) { toast("Le pack du prototype n'est pas disponible."); return; }
+  arreterLecteur(); Object.assign(cfg.sons.pistes, p); rendreSons(); apresModif();
+  toast("Pack du prototype chargé : " + Object.keys(p).length + " sons.");
+});
+$("btn-sons-vider").addEventListener("click", (e) => {
+  const b = e.currentTarget;
+  if (b.dataset.confirme !== "1") {
+    b.dataset.confirme = "1"; b.textContent = "Retirer tous les sons ?";
+    setTimeout(() => { b.dataset.confirme = ""; b.textContent = "Retirer tous les sons"; }, 4000); return;
+  }
+  b.dataset.confirme = ""; b.textContent = "Retirer tous les sons";
+  arreterLecteur(); slotsDuJeu().forEach((s) => { delete cfg.sons.pistes[s.cle]; }); rendreSons(); apresModif();
+});
+
+/* palettes de marque : gardées dans ce navigateur, et jointes aux fichiers d'édition */
+const CLE_MARQUE = "atelier-quiz-marque-v1";
+const COULEURS = ["fond", "carte", "texte", "accent"];
+function paletteValide(p) { return !!p && typeof p.nom === "string" && p.nom.trim() !== "" && COULEURS.every((k) => normaliserHex(p[k])); }
+let marque = [];
+try { const m = JSON.parse(localStorage.getItem(CLE_MARQUE) || "[]"); if (Array.isArray(m)) marque = m.filter(paletteValide).slice(0, 12); } catch (e) {}
+function sauverMarque() { try { localStorage.setItem(CLE_MARQUE, JSON.stringify(marque)); } catch (e) {} }
+function rendreMarque() {
+  const zone = $("palettes-marque"); zone.innerHTML = "";
+  $("marque-vide").hidden = marque.length > 0;
+  marque.forEach((p, i) => {
+    const w = document.createElement("span"); w.className = "pal";
+    const a = document.createElement("button"); a.type = "button"; a.className = "appliquer"; a.dataset.marqueAppliquer = String(i);
+    a.title = p.nom + " : " + COULEURS.map((k) => normaliserHex(p[k])).join(" ");
+    const s = document.createElement("span"); s.className = "pastilles";
+    [p.fond, p.carte, p.accent].forEach((c) => { const x = document.createElement("i"); x.style.background = c; s.appendChild(x); });
+    a.appendChild(s); a.appendChild(document.createTextNode(p.nom));
+    const d = document.createElement("button"); d.type = "button"; d.className = "sup"; d.dataset.marqueSupprimer = String(i);
+    d.textContent = "×"; d.setAttribute("aria-label", "Supprimer la palette " + p.nom);
+    w.appendChild(a); w.appendChild(d); zone.appendChild(w);
+  });
+}
+$("palettes-marque").addEventListener("click", (e) => {
+  const a = e.target.closest("button[data-marque-appliquer]"), d = e.target.closest("button[data-marque-supprimer]");
+  if (a) {
+    const p = marque[Number(a.dataset.marqueAppliquer)]; if (!p) return;
+    COULEURS.forEach((k) => { cfg.theme[k] = normaliserHex(p[k]); });
+    remplirFormulaire(); apresModif();
+  } else if (d) {
+    const p = marque.splice(Number(d.dataset.marqueSupprimer), 1)[0];
+    sauverMarque(); rendreMarque(); if (p) toast("Palette « " + p.nom + " » supprimée.");
+  }
+});
+function sauverPalette() {
+  const champ = $("f-nom-palette"), nom = champ.value.trim();
+  if (!nom) { toast("Donnez un nom à la palette, par exemple celui de votre marque."); champ.focus(); return; }
+  const p = { nom };
+  COULEURS.forEach((k) => { p[k] = normaliserHex(cfg.theme[k]) || "#000000"; });
+  const i = marque.findIndex((x) => x.nom.toLowerCase() === nom.toLowerCase());
+  if (i >= 0) marque[i] = p;
+  else if (marque.length >= 12) { toast("12 palettes au maximum. Supprimez-en une pour en ajouter."); return; }
+  else marque.push(p);
+  sauverMarque(); rendreMarque(); champ.value = "";
+  toast("Palette « " + nom + " » " + (i >= 0 ? "remplacée." : "enregistrée."));
+}
+$("btn-palette-sauver").addEventListener("click", sauverPalette);
+$("f-nom-palette").addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); sauverPalette(); } });
+
+$("btn-logo").addEventListener("click", () => $("fichier-logo").click());
+$("fichier-logo").addEventListener("change", (e) => {
+  const f = e.target.files[0]; e.target.value = ""; if (!f) return;
+  if (f.size > 2 * 1024 * 1024) { toast("Ce logo pèse plus de 2 Mo. Choisissez une image plus légère."); return; }
+  const r = new FileReader();
+  r.onload = () => { cfg.theme.logo = String(r.result); apresModif(); };
+  r.onerror = () => toast("Cette image n'a pas pu être lue.");
+  r.readAsDataURL(f);
+});
+$("btn-logo-retirer").addEventListener("click", () => { cfg.theme.logo = null; apresModif(); });
+
+$("f-vue").addEventListener("change", (e) => choisirVue(e.target.value));
+$("btn-rejouer").addEventListener("click", () => choisirVue("accueil"));
+
+$("btn-enregistrer").addEventListener("click", () => {
+  const c = configPropre(false);
+  if (marque.length) c.palettesMarque = marque;
+  enregistrerFichier(slug(cfg.meta.titre) + ".json", JSON.stringify(c, null, 2), "application/json");
+});
+$("btn-ouvrir").addEventListener("click", () => $("fichier-edition").click());
+$("fichier-edition").addEventListener("change", async (e) => {
+  const f = e.target.files[0]; e.target.value = ""; if (!f) return;
+  try {
+    const c = JSON.parse(await f.text());
+    if (!c || c.format !== "quiz-paliers") throw new Error("format");
+    if (Array.isArray(c.palettesMarque)) {
+      c.palettesMarque.filter(paletteValide).forEach((p) => {
+        if (marque.length < 12 && !marque.some((x) => x.nom.toLowerCase() === p.nom.toLowerCase())) marque.push(p);
+      });
+      sauverMarque(); rendreMarque();
+    }
+    cfg = normaliser(c); cfg.meta.exemple = false; vueApercu = { ecran: "accueil" };
+    toutRafraichir(); toast("Édition ouverte : " + (cfg.meta.titre || f.name));
+  } catch (err) { toast("Ce fichier n'est pas une édition de quiz. Choisissez un fichier .json enregistré depuis l'atelier."); }
+});
+$("btn-exporter").addEventListener("click", () => {
+  const propre = configPropre(true), exclues = cfg.questions.length - propre.questions.length;
+  if (!propre.questions.length) { toast("Aucune question complète à exporter. Complétez au moins une question."); return; }
+  enregistrerFichier(slug(cfg.meta.titre) + ".html", construireExport(propre), "text/html").then((ok) => {
+    if (ok && exclues) toast("Jeu exporté. " + exclues + (exclues > 1 ? " questions incomplètes ont été laissées de côté." : " question incomplète a été laissée de côté."));
+  });
+});
+$("btn-nouveau").addEventListener("click", (e) => {
+  const b = e.currentTarget;
+  if (b.dataset.confirme !== "1") {
+    b.dataset.confirme = "1"; b.textContent = "Effacer l'édition en cours ?";
+    setTimeout(() => { b.dataset.confirme = ""; b.textContent = "Nouvelle édition"; }, 4000); return;
+  }
+  b.dataset.confirme = ""; b.textContent = "Nouvelle édition";
+  const jeu = cfg.jeu; cfg = editionVide(); cfg.jeu = jeu; vueApercu = { ecran: "accueil" }; toutRafraichir();
+});
+
+function toutRafraichir() { arreterLecteur(); remplirFormulaire(); majTypeJeu(); majDerives(); majSelecteurVue(); monterApercu(); sauverBrouillon(); }
+
+try { const o = localStorage.getItem("atelier-quiz-onglet"); if (o && $("p-" + o)) ongletActif = o; } catch (e) {}
+majOnglets(); rendreMarque();
+remplirFormulaire(); majTypeJeu(); majDerives(); majSelecteurVue(); monterApercu();
+</script>

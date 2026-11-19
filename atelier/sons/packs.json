@@ -1,0 +1,17 @@
+{
+  "_note": "Correspondance événement -> fichier audio. Les fichiers eux-mêmes ne sont pas versionnés (droits d'auteur). Sans fichier, l'atelier fonctionne sans pack de sons par défaut.",
+  "SONS_DEFAUT": {
+    "lancement": "qui-veut-gagner-des-millions-stressant.mp3",
+    "correct": "correct_millionaire.mp3",
+    "faux": "wrong_millionaire.mp3",
+    "suspens": "suspens_verdict_final_millionaire.mp3",
+    "jackpot": "jackpot_millionaire.mp3"
+  },
+  "SONS_QPUC": {
+    "qp_generique": "qpuc-generique-debut.mp3",
+    "qp_buzzer": "qpuc-buzzer.mp3",
+    "qp_correct": "qpuc-bonne-reponse.mp3",
+    "qp_faux": "qpuc-mauvaise-reponse.mp3",
+    "qp_timer": "qpuc-timer.mp3"
+  }
+}
