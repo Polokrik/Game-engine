@@ -45,6 +45,7 @@ Simplifier le travail des équipes métiers et des équipes de création de cont
 - **Jeu 1, Quiz à paliers** : paliers et gains, paliers de sécurité, jokers (50/50, indice, passer), comportement en cas d'erreur, chrono facultatif, info clé, fiche mémo, rejouer.
 - **Jeu 2, Champion solo** : Sprint, La série, Trouve avant la fin ; questions ratées reposées ; records ; maîtrise par thème et thèmes à retravailler ; chrono facultatif.
 - Sons facultatifs (avertissement, choix avec/sans, bouton Son, fondus, suspense plafonné).
+- **Tableau des scores local façon arcade**, dans les deux jeux et dans le HTML exporté : 3 initiales, pseudo généré ou pseudo libre filtré ; filtre des insultes et mots interdits ajoutés par l'auteur ; top 5, 10 ou 20 ; gardé dans le navigateur du joueur.
 - Export HTML autonome pour chaque jeu ; l'atelier et ses exports fonctionnent sur SharePoint.
 - Prototype publié comme artefact Claude privé : <https://claude.ai/artifact/VBqX5XoBfA5EUToyUmoR9A>.
 
@@ -191,7 +192,9 @@ Le SCORM propre au jeu n'est plus une priorité : Rise assure le suivi du module
 - [ ] Compléter la fiche des formats et outils avec l'équipe learning.
 
 **Atelier et jeux**
-- [ ] **Tableau des scores façon arcade** (section 11) : décider du périmètre, puis construire.
+- [x] Tableau des scores local (option A de la section 11).
+- [ ] Tester le tableau des scores dans Rise puis dans le LMS (stockage du navigateur).
+- [ ] Décider si un classement commun (option B, liste SharePoint) est utile.
 - [ ] Animations et micro-effets (le côté fun).
 - [ ] Contrôles de qualité pour les auteurs : info clé manquante, thème de moins de 8 questions, réponses trop longues ou trop proches, etc.
 - [ ] Numéro de version du moteur dans chaque export.
@@ -221,7 +224,9 @@ Le SCORM propre au jeu n'est plus une priorité : Rise assure le suivi du module
 | **Jeux exportés figés** | Le code du lecteur est recopié dans chaque export | Risque assumé : modifiable depuis Rise ; numéro de version à ajouter |
 | **Dépendances externes** | cdnjs et Google Fonts peuvent être bloqués sur le réseau | Embarquer les bibliothèques |
 
-## 11. Idée à cadrer : le tableau des scores façon arcade
+## 11. Le tableau des scores façon arcade
+
+**État (2026-11-25) : l'option A est construite** (classement local, dans les deux jeux et dans les HTML exportés). L'auteur choisit dans l'onglet Règles : activer ou non, le mode de nom (3 initiales, pseudo généré, pseudo libre filtré), le nombre de scores gardés et des mots interdits en plus. Le filtre est un filtre de base : il refuse les insultes courantes même écrites avec des chiffres ou des points, mais ne remplace pas une modération. Les options B et C restent à décider.
 
 L'idée : le joueur inscrit son nom à la fin de la partie, comme sur une borne d'arcade. Elle sert le côté fun. Les travaux sur la gamification suggèrent que classements et points ajoutés en surface ne suffisent pas à motiver sur la durée (source 7 de `recherche/sources.md`, obtenue sur des élèves en mathématiques) : c'est une **couche de plaisir**, à relier à la progression personnelle (« votre meilleur score »).
 
@@ -278,3 +283,4 @@ Rapport complet : [`recherche/deep-research-serious-games-b2b.md`](recherche/dee
 | 2026-11-19 | **Produit interne, usage interne uniquement.** Outils IA des clients : Copilot, outil maison, GCP en exception. SharePoint et Rise hébergent les jeux ; suivi tenu par Rise ; SCORM via Rise. Kahoot écarté. L'assistant propose toujours 2 ou 3 formats avec avantages et limites. Les auteurs sont responsables de leurs jeux exportés. Chrono activable ou désactivable. L'accessibilité vient plus tard. Garder un côté fun. Tableau des scores façon arcade à cadrer |
 | 2026-11-25 | Sons par défaut remis dans le build et versionnés dans le dépôt privé (usage interne). Publication sur GitHub Pages préparée : outil seul, public, **sans sons par défaut** ; les sons peuvent être publiés avec la variable `PUBLIER_SONS=true` |
 | 2026-11-25 (suite) | Le dépôt est passé en **public** et GitHub Pages est activé. Décision du porteur : **les sons sont publiés** sur la page (par défaut, `PUBLIER_SONS=false` pour les retirer) |
+| 2026-11-25 (soir) | **Tableau des scores local** construit (option A) : initiales, pseudo généré ou libre filtré ; scores gardés dans le navigateur du joueur. Correction d'un défaut de l'éditeur : quitter un champ de texte relançait l'aperçu |

@@ -338,6 +338,24 @@ input.hex{font-family:ui-monospace,"Cascadia Mono",Consolas,monospace;font-size:
           <h2>Apprendre de ses erreurs</h2>
           <label class="coche"><input type="checkbox" id="f-reposer" data-c="champion.reposerErreurs"><span>Reposer plus tard une question ratée, pour retenter la même question</span></label>
         </div>
+        <div class="bloc">
+          <h2>Tableau des scores</h2>
+          <label class="coche"><input type="checkbox" id="f-scores-actif" data-c="scores.actif"><span>Afficher un tableau des scores, comme sur une borne d'arcade</span></label>
+          <div class="grille">
+            <label class="champ"><span>Nom du joueur</span>
+              <select id="f-scores-mode" data-c="scores.mode">
+                <option value="initiales">3 initiales (style arcade)</option>
+                <option value="genere">Pseudo généré, sans saisie (le plus sûr)</option>
+                <option value="libre">Pseudo libre, filtré</option>
+              </select>
+            </label>
+            <label class="champ"><span>Scores gardés</span>
+              <select id="f-scores-taille" data-c="scores.taille" data-num="1"><option value="5">5</option><option value="10">10</option><option value="20">20</option></select>
+            </label>
+          </div>
+          <label class="champ"><span>Mots interdits en plus, séparés par des virgules</span><input type="text" id="f-scores-mots" data-scores-mots placeholder="Par exemple le nom d'un concurrent"></label>
+          <p class="aide">Les scores restent dans le navigateur du joueur : ce poste, ce navigateur. Ils ne sont pas partagés entre les joueurs et peuvent ne pas être conservés dans certaines fenêtres intégrées (Rise, LMS). Un filtre de base refuse les insultes courantes ; le pseudo généré évite toute saisie libre.</p>
+        </div>
       </div>
       <!-- SONS -->
       <div class="panneau" id="p-sons" role="tabpanel" aria-labelledby="tab-sons" hidden>
@@ -478,6 +496,7 @@ function mountQuiz(racine, config, options) {
   var modeErreur = regles.erreur || "descend";
   var chrono = Number(regles.chrono) || 0;
   var etat = null, minuterie = null, chronoEl = null;
+  var tableauScores = creerTableauScores(config.scores, "qz-scores-" + (meta.id || "defaut"), options.persistance !== false);
 
   /* ---------- sons : facultatifs, le joueur choisit avec ou sans et peut couper à tout moment ---------- */
   var sons = config.sons || {}, pistes = sons.pistes || {};
@@ -610,7 +629,8 @@ function mountQuiz(racine, config, options) {
       jokers: { moitie: Number(jk.moitie) || 0, indice: Number(jk.indice) || 0, passer: Number(jk.passer) || 0 },
       resultats: [],
       ordre: questions.map(function (q) { return regles.melangerReponses === false ? q.rep.slice() : melanger(q.rep); }),
-      choix: null, valide: false, masquees: [], indiceVisible: false, reste: 0, bilan: null
+      choix: null, valide: false, masquees: [], indiceVisible: false, reste: 0, bilan: null,
+      scoreEtat: { fait: false, rang: 0, nom: "", pseudo: "" }
     };
   }
   function appliquer(ok) {
@@ -707,7 +727,8 @@ function mountQuiz(racine, config, options) {
       el("h1", { text: meta.titre || "Quiz" }),
       meta.sousTitre ? el("p", { class: "qz-accroche", text: meta.sousTitre }) : null,
       el("ul", { class: "qz-regles" }, liste.map(function (t) { return el("li", { text: t }); })),
-      aSons ? vueChoixSon() : el("button", { class: "qz-btn qz-principal", type: "button", "data-focus": "1", text: "Commencer", onclick: function () { demarrer(false); } })
+      aSons ? vueChoixSon() : el("button", { class: "qz-btn qz-principal", type: "button", "data-focus": "1", text: "Commencer", onclick: function () { demarrer(false); } }),
+      vueTableauScores(el, tableauScores, { compact: true, format: fmt })
     ]);
   }
 
@@ -857,6 +878,7 @@ function mountQuiz(racine, config, options) {
       el("h1", { class: "qz-gain-final", text: fmt(montant(etat.niveau)) }),
       el("p", { class: "qz-score", text: bonnes + (bonnes > 1 ? " bonnes réponses" : " bonne réponse") + " sur " + n + " · palier " + etat.niveau + " sur " + n }),
       meta.messageFin ? el("p", { class: "qz-accroche", text: meta.messageFin }) : null,
+      vueTableauScores(el, tableauScores, { score: montant(etat.niveau), format: fmt, etat: etat.scoreEtat, rerendre: function () { rendre(true); } }),
       el("button", { class: "qz-btn qz-principal", type: "button", "data-focus": "1", text: "Rejouer", onclick: function () { nouvellePartie(); rendre(true); } }),
       el("section", { class: "qz-memo" }, [
         el("h2", { text: "Fiche mémo" }),
@@ -1014,6 +1036,24 @@ const PLAYER_CSS = `
 .qz-suspense-titre{font-size:19px;font-weight:700;animation:qz-pulse 1.3s ease-in-out infinite}
 @keyframes qz-pulse{50%{opacity:.45}}
 
+.qz-discret{border-color:transparent;color:var(--doux)}
+.qz-scores{width:100%;max-width:560px;display:flex;flex-direction:column;gap:12px;background:var(--carte);border-radius:var(--rayon);padding:16px 18px}
+.qz-scores h2{font-size:20px}
+.qz-scores>.qz-discret{align-self:flex-start;padding-left:0}
+.qz-scores-form{display:flex;flex-direction:column;gap:10px}
+.qz-scores-ligne{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.qz-nom-saisie{font-family:ui-monospace,"Cascadia Mono",Consolas,monospace;font-size:30px;font-weight:700;letter-spacing:.35em;text-indent:.35em;text-transform:uppercase;width:4.6em;text-align:center;padding:6px 8px;border-radius:calc(var(--rayon) / 2);border:2px solid var(--accent);background:var(--fond);color:var(--texte)}
+.qz-nom-libre{font:inherit;font-size:20px;font-weight:700;width:min(100%,14em);padding:8px 12px;border-radius:calc(var(--rayon) / 2);border:2px solid var(--accent);background:var(--fond);color:var(--texte)}
+.qz-pseudo{font-size:24px;font-weight:700;color:var(--accent)}
+.qz-erreur{color:var(--ko);font-weight:600}
+.qz-scores-liste{list-style:none;padding:0;display:flex;flex-direction:column;gap:2px;font-variant-numeric:tabular-nums}
+.qz-scores-li{display:grid;grid-template-columns:2.4em minmax(0,1fr) auto;gap:10px;align-items:baseline;padding:6px 8px;border-radius:calc(var(--rayon) / 2)}
+.qz-rang{text-align:right;color:var(--doux)}
+.qz-nom{font-family:ui-monospace,"Cascadia Mono",Consolas,monospace;font-weight:700;letter-spacing:.12em;text-transform:uppercase;overflow-wrap:anywhere}
+.qz-pts{font-weight:700;color:var(--accent)}
+.qz-scores-li:nth-child(1) .qz-rang,.qz-scores-li:nth-child(1) .qz-nom{color:var(--accent)}
+.qz-score-moi{background:color-mix(in srgb,var(--accent) 20%,transparent);outline:2px solid var(--accent)}
+
 @container (max-width:780px){
   .qz-plateau{grid-template-columns:minmax(0,1fr)}
   .qz-echelle{display:none}
@@ -1112,6 +1152,7 @@ function editionExemple() {
     jeu: "quiz",
     champion: reglesChampion(),
     trouve: trouvesExemple(),
+    scores: { actif: true, mode: "initiales", taille: 10, motsInterdits: [] },
     questions: [
       Q("Quelle méthode de révision ancre le mieux un contenu dans la mémoire à long terme ?",
         ["Relire ses notes plusieurs fois", "Surligner les passages importants", "Se tester sans regarder ses notes", "Recopier le cours au propre"], 2,
@@ -1221,6 +1262,15 @@ function normaliserSons(s, base) {
   }
   return o;
 }
+function normaliserScores(s, base) {
+  const o = JSON.parse(JSON.stringify(base));
+  if (!s || typeof s !== "object") return o;
+  if (typeof s.actif === "boolean") o.actif = s.actif;
+  if (["initiales", "genere", "libre"].indexOf(s.mode) >= 0) o.mode = s.mode;
+  if ([5, 10, 20].indexOf(Number(s.taille)) >= 0) o.taille = Number(s.taille);
+  if (Array.isArray(s.motsInterdits)) o.motsInterdits = s.motsInterdits.map((x) => String(x).trim()).filter(Boolean).slice(0, 50);
+  return o;
+}
 function normaliserChampion(s, base) {
   const o = JSON.parse(JSON.stringify(base));
   if (!s || typeof s !== "object") return o;
@@ -1241,6 +1291,7 @@ function normaliser(c) {
     sons: normaliserSons(c.sons, base.sons),
     jeu: c.jeu === "champion" ? "champion" : "quiz",
     champion: normaliserChampion(c.champion, base.champion),
+    scores: normaliserScores(c.scores, base.scores),
     trouve: [],
     questions: []
   };
@@ -1317,7 +1368,7 @@ function construireExport(c) {
   if (c.sons && c.sons.actif === false) c.sons = { actif: false, pistes: {} };
   const champion = c.jeu === "champion";
   const json = JSON.stringify(c).replace(/</g, "\\u003c");
-  const code = (champion ? [fabriquerEl, appliquerTheme, creerMoteurSons, mountChampion] : [fabriquerEl, appliquerTheme, calculerEchelle, mountQuiz])
+  const code = (champion ? [fabriquerEl, appliquerTheme, creerMoteurSons, creerTableauScores, vueTableauScores, mountChampion] : [fabriquerEl, appliquerTheme, creerTableauScores, vueTableauScores, calculerEchelle, mountQuiz])
     .map((f) => f.toString()).join("\n");
   return [
     "<!DOCTYPE html>", '<html lang="fr">', "<head>", '<meta charset="utf-8">',
@@ -1346,7 +1397,7 @@ function monterApercu() {
   racineOmbre.appendChild(style); racineOmbre.appendChild(hote);
   partie = cfg.jeu === "champion"
     ? mountChampion(hote, configPropre(true), { depart: vueApercu, autoFocus: false, persistance: false })
-    : mountQuiz(hote, configPropre(true), { depart: vueApercu, autoFocus: false });
+    : mountQuiz(hote, configPropre(true), { depart: vueApercu, autoFocus: false, persistance: false });
 }
 function planifierApercu() { clearTimeout(minuteurApercu); minuteurApercu = setTimeout(monterApercu, 250); }
 const VUES_CHAMPION = [["accueil", "Écran d'accueil"], ["sprint", "Sprint"], ["serie", "La série"], ["trouve", "Trouve avant la fin"], ["fin", "Écran de fin"]];
@@ -1434,6 +1485,8 @@ function remplirFormulaire() {
   });
   document.querySelectorAll("[data-hex]").forEach((h) => { h.value = String(lire(cfg, h.dataset.hex) || "").toUpperCase(); });
   document.querySelectorAll("[data-manche]").forEach((c) => { c.checked = cfg.champion.manches.indexOf(c.dataset.manche) >= 0; });
+  const mots = document.querySelector("[data-scores-mots]");
+  if (mots) mots.value = (cfg.scores.motsInterdits || []).join(", ");
 }
 
 /* ---------- onglet Questions ---------- */
@@ -1789,6 +1842,13 @@ large.addEventListener("change", majOnglets);
 
 function surSaisie(e) {
   const t = e.target;
+  /* Dans un champ de texte, « input » a déjà tout traité : ignorer « change » évite de relancer l'aperçu (et d'effacer ce qu'on y saisit) quand on quitte le champ. */
+  if (e.type === "change" && !t.dataset.hex && (t.tagName === "TEXTAREA" || (t.tagName === "INPUT" && (t.type === "text" || t.type === "number")))) return;
+  if (t.dataset.scoresMots !== undefined) {
+    cfg.scores.motsInterdits = t.value.split(/[,;\n]/).map((x) => x.trim()).filter(Boolean).slice(0, 50);
+    apresModif();
+    return;
+  }
   if (t.dataset.manche) {
     cfg.champion.manches = ["sprint", "serie", "trouve"].filter((m) => { const c = document.querySelector('[data-manche="' + m + '"]'); return c && c.checked; });
     apresModif();

@@ -15,6 +15,7 @@ function mountChampion(racine, config, options) {
   function entier(v, def, min, max) { v = Math.round(Number(v)); if (!isFinite(v)) v = def; return Math.max(min, Math.min(max, v)); }
   function propre(x) { return String(x == null ? "" : x).trim(); }
   function pluriel(n, un, plusieurs) { return n + " " + (Math.abs(n) > 1 ? plusieurs : un); }
+  function formatScore(s) { return pluriel(s, "point", "points"); }
 
   var objectif = entier(cSprint.objectif, 9, 1, 99);
   var sprintMax = entier(cSprint.questionsMax, 14, 3, 60);
@@ -77,6 +78,7 @@ function mountChampion(racine, config, options) {
     return vide;
   }
   var stats = chargerStats();
+  var tableauScores = creerTableauScores(config.scores, "qz-scores-" + (meta.id || "defaut"), options.persistance !== false);
   function sauverStats() {
     if (options.persistance === false) return;
     try { window.localStorage.setItem(cleStock, JSON.stringify(stats)); } catch (e) { stockOk = false; }
@@ -102,7 +104,7 @@ function mountChampion(racine, config, options) {
   function arreterChrono() { if (minuterie) { clearInterval(minuterie); minuterie = null; } }
   function nouvellePartie() {
     arreterChrono(); moteur.arreter();
-    etat = { ecran: "accueil", im: -1, manche: null, m: null, q: null, t: null, score: 0, chaine: 0, chaineMax: 0, bilans: {}, reponses: [], final: null, sprintRecord: false, reste: 0 };
+    etat = { ecran: "accueil", im: -1, manche: null, m: null, q: null, t: null, score: 0, chaine: 0, chaineMax: 0, bilans: {}, reponses: [], final: null, sprintRecord: false, reste: 0, scoreEtat: { fait: false, rang: 0, nom: "", pseudo: "" } };
   }
 
   /* ---------- éléments d'interface ---------- */
@@ -222,6 +224,7 @@ function mountChampion(racine, config, options) {
       meta.sousTitre ? el("p", { class: "qz-accroche", text: meta.sousTitre }) : null,
       el("ul", { class: "qz-regles" }, regles.map(function (t) { return el("li", { text: t }); })),
       bas,
+      vueTableauScores(el, tableauScores, { compact: true, format: formatScore }),
       aJoue ? blocRecords() : null,
       aJoue ? blocMaitrise("Votre maîtrise par thème") : null,
       !stockOk && options.persistance !== false ? el("p", { class: "qz-doux", text: "Vos records ne peuvent pas être conservés dans ce contexte de lecture." }) : null
@@ -573,6 +576,7 @@ function mountChampion(racine, config, options) {
       nv.score ? el("p", { class: "qc-record", text: "Nouveau record de score !" }) : null,
       el("p", { class: "qz-score", text: "Meilleure série de la partie : " + f.chaineMax + (nv.serie ? " · nouveau record !" : "") }),
       meta.messageFin ? el("p", { class: "qz-accroche", text: meta.messageFin }) : null,
+      vueTableauScores(el, tableauScores, { score: f.score, format: formatScore, etat: etat.scoreEtat, rerendre: function () { rendre(true); } }),
       el("button", { class: "qz-btn qz-principal", type: "button", "data-focus": "1", text: "Rejouer", onclick: function () { nouvellePartie(); rendre(true); } }),
       el("ul", { class: "qc-cartes" }, cartes),
       blocRecords(),

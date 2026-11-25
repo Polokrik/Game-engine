@@ -13,7 +13,7 @@ Atelier d'édition de jeux de connaissances en HTML. Les auteurs saisissent ou i
 | **Quiz à paliers** | Questions à choix, montée de paliers, jokers, info clé après chaque réponse | Retrouver et reconnaître des connaissances | 5 à 10 min ; 10 à 20 questions | Questions avec 2 à 4 réponses, une info clé, un thème |
 | **Champion solo** | 3 manches : Sprint (atteindre un nombre de points), La série (enchaîner 4 bonnes réponses sur un thème), Trouve avant la fin (deviner un concept avec 4 indices, plus tôt = plus de points) | Retrouver, consolider, déduire à partir d'indices | 5 à 10 min ; 12 à 20 questions | Questions avec thème et niveau (1 à 3 points) ; concepts avec 4 indices, une réponse et 3 fausses propositions |
 
-**Points communs.** Chrono facultatif. Sons facultatifs. Fiche mémo en fin de partie. Les questions ratées sont reposées plus tard dans le Champion solo. Un thème doit contenir au moins 8 questions pour que la série de 4 fonctionne bien.
+**Points communs.** Chrono facultatif. Sons facultatifs. Fiche mémo en fin de partie. Tableau des scores local façon arcade (3 initiales, pseudo généré ou pseudo libre filtré), propre à chaque poste. Les questions ratées sont reposées plus tard dans le Champion solo. Un thème doit contenir au moins 8 questions pour que la série de 4 fonctionne bien.
 
 **Limites à connaître**
 - Le score reste dans le navigateur du joueur : **il ne remonte pas au LMS**.
