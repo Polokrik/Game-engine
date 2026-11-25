@@ -3,3 +3,4 @@ atelier/dist/
 node_modules/
 __pycache__/
 *.pyc
+assistant/dist/

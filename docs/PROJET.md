@@ -125,13 +125,16 @@ Atelier (éditeur)  --écrit-->  Édition (.json)  --lue par-->  Lecteur du jeu
 - **La sortie est un fichier d'import** (le modèle Excel de l'atelier) : la boucle assistant, fichier, atelier fonctionne sans API.
 - **Chaque question générée cite son passage source** ; un humain valide avant publication.
 
-### 6.4 Livrables (premières versions dans `assistant/`)
-- [x] Prompt système compact (`assistant/prompt-systeme.md`).
-- [x] Grille de décision des formats (`assistant/connaissances/01-grille-de-decision.md`).
-- [x] Fiche des formats et outils, à compléter par l'équipe (`02-formats-et-outils.md`).
-- [x] Gabarits : brief, comparatif, plan de module, import Excel (`03-gabarits.md`).
-- [x] Jeu d'évaluation : trame et 3 cas fictifs (`assistant/evaluation/jeu-evaluation.md`).
-- [ ] Test sur Copilot et sur l'outil maison, avec 3 à 10 briefs réels.
+### 6.4 Livrables (version 0.2 dans `assistant/`)
+Les premiers retours des testeurs sont positifs. La version 0.2 répond aux critiques : prompt trop court et peu précis, pas d'instruction pour explorer les fichiers, fichiers trop vagues.
+- [x] Prompt système de 5 500 caractères environ (limite de Copilot : 8 000) : identité, procédure de consultation des fichiers, 10 règles absolues, déroulé en 3 étapes, situations fréquentes.
+- [x] `00-index` : porte d'entrée qui indique la section à consulter selon la question.
+- [x] `01-diagnostic-et-choix`, `02-formats-et-outils`, `03-construire-par-format`, `04-remplir-un-jeu`, `05-guide-atelier`, `06-gabarits`, `07-exemples` : 51 sections codées, qui se comprennent seules.
+- [x] Jeu d'évaluation : 20 critères et 8 cas (`assistant/evaluation/jeu-evaluation.md`).
+- [x] Outils : `verifier.py` (cohérence), `construire-connaissances.py` (conversion en Word pour Copilot).
+- [x] Liste de ce qu'il manque (`assistant/a-completer.md`, 18 points).
+- [ ] Compléter les éléments `[à compléter]` avec les équipes Rise, SharePoint, learning.
+- [ ] Évaluer avec la grille sur Copilot et sur l'outil maison, avec 3 à 10 vrais briefs.
 - [ ] Procédure de mise à jour et de versionnage.
 
 ### 6.5 Points d'attention
@@ -187,9 +190,10 @@ Le SCORM propre au jeu n'est plus une priorité : Rise assure le suivi du module
 - [ ] Faire créer un module à un auteur des équipes, sans aide, et chronométrer.
 
 **Assistant IA (phase 2)**
-- [ ] Relever les limites de Copilot (agents, instructions, fichiers) et de l'outil maison.
+- [x] Limites de Copilot relevées : 8 000 caractères d'instructions, fichiers de connaissance en Word, Excel, PowerPoint ou PDF (pas Markdown), 20 fichiers au maximum dans Agent Builder.
+- [ ] Relever les limites de l'outil maison.
 - [ ] Remplacer les cas fictifs du jeu d'évaluation par des briefs réels.
-- [ ] Compléter la fiche des formats et outils avec l'équipe learning.
+- [ ] Compléter les 18 informations de `assistant/a-completer.md`, en commençant par les procédures SharePoint et Rise.
 
 **Atelier et jeux**
 - [x] Tableau des scores local (option A de la section 11).
@@ -285,3 +289,4 @@ Rapport complet : [`recherche/deep-research-serious-games-b2b.md`](recherche/dee
 | 2026-11-25 (suite) | Le dépôt est passé en **public** et GitHub Pages est activé. Décision du porteur : **les sons sont publiés** sur la page (par défaut, `PUBLIER_SONS=false` pour les retirer) |
 | 2026-11-25 (soir) | **Tableau des scores local** construit (option A) : initiales, pseudo généré ou libre filtré ; scores gardés dans le navigateur du joueur. Correction d'un défaut de l'éditeur : quitter un champ de texte relançait l'aperçu |
 | 2026-11-26 | Le tableau des scores devient une **option désactivée par défaut**, réservée aux jeux hébergés sur SharePoint ; pas de besoin pour Rise ou le LMS |
+| 2026-11-26 (assistant) | **Assistant IA, version 0.2** : prompt plus précis avec procédure pour explorer les fichiers, base de connaissances restructurée en 8 fichiers et 51 sections, exemples, guide de l'Atelier, liste de ce qui manque. Constat : les fichiers Markdown ne sont pas acceptés comme connaissance par Copilot Studio, d'où une conversion en Word |
