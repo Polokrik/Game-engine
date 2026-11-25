@@ -53,5 +53,10 @@ jobs:
       - uses: actions/upload-pages-artifact@v3
         with:
           path: _site
+      # GitHub enregistre parfois l'artefact avec un léger retard : sans cette attente, la publication échoue
+      # avec « No artifacts named github-pages were found ». Ne pas relancer l'exécution en boucle : cela
+      # dépose plusieurs artefacts et bloque la publication. Lancer plutôt une nouvelle exécution.
+      - name: Attendre l'enregistrement de l'artefact
+        run: sleep 30
       - id: deploiement
         uses: actions/deploy-pages@v4
