@@ -100,6 +100,10 @@ input.hex{font-family:ui-monospace,"Cascadia Mono",Consolas,monospace;font-size:
 .q-n{font-family:var(--titre);font-weight:700;color:var(--accent);font-variant-numeric:tabular-nums;flex:none;min-width:2.6em}
 .q-titre{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .q-etat{flex:none;font-size:12px;font-weight:600;color:var(--alerte);background:var(--alerte-pale);padding:2px 8px;border-radius:99px}
+.q-qualite{flex:none;font-size:12px;font-weight:600;color:var(--alerte);background:var(--alerte-pale);padding:2px 8px;border-radius:99px}
+.q-avis{background:var(--alerte-pale);color:var(--alerte);border-radius:8px;padding:10px 12px;font-size:13.5px}
+.q-avis ul,#controle-qualite ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:4px}
+#controle-qualite .ok{color:var(--ok)}
 .q[open]>summary{border-bottom:1px solid var(--trait)}
 .q-corps{padding:14px;display:flex;flex-direction:column;gap:12px}
 .reponses{border:0;padding:0;margin:0;display:flex;flex-direction:column;gap:6px;min-width:0}
@@ -242,6 +246,7 @@ input.hex{font-family:ui-monospace,"Cascadia Mono",Consolas,monospace;font-size:
           </div>
           <div class="avis" id="import-bilan" hidden></div>
         </div>
+        <div id="controle-qualite" class="bloc" hidden></div>
         <div id="liste-questions"></div>
         <div><button type="button" id="btn-ajouter">Ajouter une question</button></div>
         <div class="trouve-zone" data-jeu="champion" hidden>
@@ -1169,7 +1174,7 @@ function editionExemple() {
         "Sans révision, la plus grande partie de l'oubli se produit dans les heures et les jours qui suivent l'apprentissage. Le premier rappel doit donc arriver tôt.",
         "Ebbinghaus, 1885"),
       Q("Pour retenir durablement, comment vaut-il mieux répartir trois heures de révision ?",
-        ["En une seule séance, la veille", "En plusieurs séances courtes, espacées de quelques jours", "En deux séances le même jour", "Peu importe, seul le temps total compte"], 1,
+        ["En une seule longue séance, la veille de l'examen", "En plusieurs séances courtes, espacées de quelques jours", "En deux grandes séances rapprochées, le même jour", "Peu importe, seul le temps total de travail compte"], 1,
         "Le temps qui passe entre deux séances travaille pour vous.",
         "C'est l'effet d'espacement : à durée égale, des séances réparties dans le temps donnent un souvenir plus durable qu'une séance unique.",
         "Cepeda et al., 2006"),
@@ -1481,6 +1486,7 @@ function majDerives() {
   }
   const tv = trouvesValides().length;
   $("compte-trouve").textContent = "(" + tv + (tv < cfg.trouve.length ? " sur " + cfg.trouve.length : "") + ")";
+  majQualite();
 }
 function apresModif() { sauverBrouillon(); majDerives(); majSelecteurVue(); planifierApercu(); }
 function remplirFormulaire() {
@@ -1569,6 +1575,109 @@ function montrerDansApercu(uidQ) {
   if (vueApercu.ecran === "question" && vueApercu.index === idx) return;
   vueApercu = { ecran: "question", index: idx };
   majSelecteurVue(); planifierApercu();
+}
+
+/* ---------- contrôle qualité : des conseils sur la forme, jamais des blocages ---------- */
+let pointsQualite = 0;
+const MOT = (s) => String(s == null ? "" : s).normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+function qualiteQuestion(q) {
+  const m = [];
+  const rep = q.reponses.map((r) => String(r || "").trim()), pleines = rep.filter(Boolean), bonne = rep[q.bonne] || "";
+  if (!String(q.infoCle || "").trim()) m.push("Pas d'info clé : le joueur ne saura pas pourquoi la réponse est juste.");
+  if (q.enonce.trim().length > 200) m.push("Énoncé long (plus de 200 caractères) : visez une question qu'on comprend d'un coup d'œil.");
+  if (/\b(sauf|excepte|exception)\b|\bn (est|a|ont|sont|etait|doit|peut|faut) pas\b|\bne (sont|doit|doivent|peut|peuvent|faut) pas\b|\b(laquelle|lequel|lesquels|lesquelles) (n|ne)\b/.test(MOT(q.enonce))) m.push("Évitez les négations dans l'énoncé : elles piègent le lecteur sans mesurer ce qu'il sait.");
+  const vus = {}; pleines.forEach((r) => { const k = MOT(r); vus[k] = (vus[k] || 0) + 1; });
+  if (Object.keys(vus).some((k) => vus[k] > 1)) m.push("Deux réponses sont identiques.");
+  if (pleines.some((r) => /toutes les (reponses|propositions)|aucune de ces|aucune des|tous les elements ci dessus|ci dessus/.test(MOT(r)))) m.push("« Toutes les réponses » ou « Aucune de ces réponses » : à éviter, ces formules facilitent la devinette.");
+  const autres = rep.filter((r, i) => i !== q.bonne && r);
+  if (bonne && autres.length) {
+    const moy = autres.reduce((s, r) => s + r.length, 0) / autres.length;
+    if (bonne.length >= 25 && bonne.length > 1.6 * moy) m.push("La bonne réponse est nettement plus longue que les autres : elle se devine.");
+  }
+  if (pleines.length === 2) m.push("Seulement 2 réponses : le hasard donne une chance sur deux. Ajoutez-en une ou deux.");
+  if (cfg.jeu === "champion" && !String(q.theme || "").trim()) m.push("Pas de thème : la question ira dans « Général ».");
+  return m;
+}
+function qualiteConcept(x) {
+  const m = [], rep = MOT(x.reponse);
+  if (!String(x.infoCle || "").trim()) m.push("Pas d'info clé : le joueur ne saura pas pourquoi c'est la bonne réponse.");
+  if (rep.length >= 4) x.indices.forEach((ind, k) => { if (MOT(ind).indexOf(rep) >= 0) m.push("L'indice " + (k + 1) + " contient la réponse : le jeu serait trop facile."); });
+  const ind = x.indices.map(MOT).filter(Boolean);
+  if (new Set(ind).size < ind.length) m.push("Deux indices sont identiques.");
+  const tous = x.faux.map((f) => String(f || "").trim()).filter(Boolean).concat([x.reponse.trim()]).map(MOT);
+  if (new Set(tous).size < tous.length) m.push("Une fausse proposition est identique à la bonne réponse ou à une autre.");
+  return m;
+}
+function qualiteGlobale() {
+  const m = [], valides = questionsValides();
+  if (cfg.jeu === "quiz") {
+    if (valides.length > 0 && valides.length < 8) m.push("Moins de 8 questions : la partie sera très courte. Visez 10 à 20.");
+    if (valides.length > 25) m.push("Plus de 25 questions : la partie sera longue. Visez 10 à 20.");
+    if (cfg.regles.melangerReponses === false && valides.length >= 6) {
+      const n = [0, 0, 0, 0]; valides.forEach((q) => { n[q.bonne]++; });
+      const max = Math.max(...n);
+      if (max > valides.length * 0.55) m.push("La bonne réponse est trop souvent la lettre " + "ABCD"[n.indexOf(max)] + " (" + max + " fois sur " + valides.length + ") : variez, ou activez le mélange des réponses.");
+    }
+    return m;
+  }
+  const L = Number(cfg.champion.serie.longueur) || 4, themes = {};
+  valides.forEach((q) => { const th = String(q.theme || "").trim() || "Général"; themes[th] = (themes[th] || 0) + 1; });
+  const noms = Object.keys(themes);
+  noms.forEach((th) => {
+    const n = themes[th];
+    if (n < L) m.push("Thème « " + th + " » : " + n + " question" + (n > 1 ? "s" : "") + ". Il en faut au moins " + L + " pour jouer La série ; visez 8.");
+    else if (n < 8) m.push("Thème « " + th + " » : " + n + " questions. Visez 8 pour limiter les répétitions.");
+  });
+  if (cfg.champion.manches.indexOf("serie") >= 0 && noms.length && !noms.some((th) => themes[th] >= L)) m.push("Aucun thème n'a assez de questions : la manche « La série » sera ignorée.");
+  if (valides.length > 0 && valides.length < 12) m.push("Moins de 12 questions : le Sprint risque de manquer de questions.");
+  if (valides.length >= 6 && new Set(valides.map((q) => String(q.niveau || "1"))).size === 1) m.push("Tous les niveaux sont identiques : variez 1, 2 et 3 points pour donner du relief.");
+  if (cfg.champion.manches.indexOf("trouve") >= 0) {
+    const nb = Number(cfg.champion.trouve.nombre) || 3, tv = trouvesValides().length;
+    if (tv === 0) m.push("Aucun concept complet : la manche « Trouve avant la fin » sera ignorée.");
+    else if (tv < nb) m.push(tv + " concept" + (tv > 1 ? "s" : "") + " pour « Trouve avant la fin » : il en faut au moins " + nb + " par partie, et davantage pour varier les parties.");
+  }
+  return m;
+}
+function appliquerAvis(carte, m) {
+  if (!carte) return;
+  const sum = carte.querySelector("summary"), corps = carte.querySelector(".q-corps");
+  let badge = sum.querySelector(".q-qualite"), boite = corps.querySelector(".q-avis");
+  if (!m.length) { if (badge) badge.remove(); if (boite) boite.remove(); return; }
+  if (!badge) { badge = document.createElement("span"); badge.className = "q-qualite"; sum.appendChild(badge); }
+  badge.textContent = m.length + (m.length > 1 ? " conseils" : " conseil");
+  if (!boite) { boite = document.createElement("div"); boite.className = "q-avis"; corps.insertBefore(boite, corps.firstChild); }
+  const sig = m.join("|");
+  if (boite.dataset.sig !== sig) {
+    boite.dataset.sig = sig; boite.innerHTML = "";
+    const ul = document.createElement("ul");
+    m.forEach((x) => { const li = document.createElement("li"); li.textContent = x; ul.appendChild(li); });
+    boite.appendChild(ul);
+  }
+}
+function majQualite() {
+  const panneau = $("controle-qualite"); if (!panneau) return;
+  let total = 0;
+  cfg.questions.forEach((q) => {
+    const m = probleme(q) ? [] : qualiteQuestion(q); total += m.length;
+    appliquerAvis(document.querySelector('#liste-questions details[data-uid="' + q.uid + '"]'), m);
+  });
+  if (cfg.jeu === "champion") {
+    cfg.trouve.forEach((x) => {
+      const m = problemeTrouve(x) ? [] : qualiteConcept(x); total += m.length;
+      appliquerAvis(document.querySelector('#liste-trouve details[data-uid="' + x.uid + '"]'), m);
+    });
+  }
+  const g = qualiteGlobale(); total += g.length; pointsQualite = total;
+  panneau.hidden = false; panneau.innerHTML = "";
+  const h = document.createElement("h3"); h.textContent = "Contrôle qualité"; panneau.appendChild(h);
+  const p = document.createElement("p");
+  if (!total) { p.className = "ok"; p.textContent = "Rien à signaler : les contrôles automatiques ne trouvent rien à redire."; }
+  else p.textContent = total + (total > 1 ? " conseils" : " conseil") + " : les pastilles orange des questions donnent le détail.";
+  panneau.appendChild(p);
+  if (g.length) { const ul = document.createElement("ul"); g.forEach((x) => { const li = document.createElement("li"); li.textContent = x; ul.appendChild(li); }); panneau.appendChild(ul); }
+  const aide = document.createElement("p"); aide.className = "aide";
+  aide.textContent = "Contrôles automatiques sur la forme, qui ne vérifient pas que le contenu est juste : une relecture par un expert reste nécessaire. Ce sont des conseils, ils ne bloquent pas l'export.";
+  panneau.appendChild(aide);
 }
 
 /* ---------- onglet Questions : « Trouve avant la fin » ---------- */
@@ -2127,6 +2236,7 @@ $("btn-exporter").addEventListener("click", () => {
   enregistrerFichier(slug(cfg.meta.titre) + ".html", construireExport(propre), "text/html").then((ok) => {
     if (!ok) return;
     toast("Jeu exporté. Tableau des scores : " + (propre.scores && propre.scores.actif ? "activé." : "désactivé (à activer dans l'onglet Scores).")
+      + (pointsQualite ? " " + pointsQualite + (pointsQualite > 1 ? " conseils de qualité restent" : " conseil de qualité reste") + " à lire (onglet Questions)." : "")
       + (exclues ? " " + exclues + (exclues > 1 ? " questions incomplètes ont été laissées de côté." : " question incomplète a été laissée de côté.") : ""));
   });
 });

@@ -45,6 +45,7 @@ Simplifier le travail des équipes métiers et des équipes de création de cont
 - **Jeu 1, Quiz à paliers** : paliers et gains, paliers de sécurité, jokers (50/50, indice, passer), comportement en cas d'erreur, chrono facultatif, info clé, fiche mémo, rejouer.
 - **Jeu 2, Champion solo** : Sprint, La série, Trouve avant la fin ; questions ratées reposées ; records ; maîtrise par thème et thèmes à retravailler ; chrono facultatif.
 - Sons facultatifs (avertissement, choix avec/sans, bouton Son, fondus, suspense plafonné).
+- **Contrôle qualité dans l'éditeur** : conseils automatiques sur la forme des questions et des concepts, avec un rappel à l'export. Ils ne vérifient pas que le contenu est juste.
 - **Tableau des scores local façon arcade**, dans les deux jeux et dans le HTML exporté : 3 initiales, pseudo généré ou pseudo libre filtré ; filtre des insultes et mots interdits ajoutés par l'auteur ; top 5, 10 ou 20 ; gardé dans le navigateur du joueur.
 - Export HTML autonome pour chaque jeu ; l'atelier et ses exports fonctionnent sur SharePoint.
 - Prototype publié comme artefact Claude privé : <https://claude.ai/artifact/VBqX5XoBfA5EUToyUmoR9A>.
@@ -201,7 +202,7 @@ Le SCORM propre au jeu n'est plus une priorité : Rise assure le suivi du module
 - [x] Tableau des scores sur SharePoint : testé en page HTML et en dossier, le stockage est bloqué dans les deux cas. **Décision : pas de persistance des scores sur SharePoint** ; le tableau tient le temps d'une visite.
 - [ ] Classement commun (option B, liste SharePoint) : à construire seulement si une équipe le demande.
 - [ ] Animations et micro-effets (le côté fun).
-- [ ] Contrôles de qualité pour les auteurs : info clé manquante, thème de moins de 8 questions, réponses trop longues ou trop proches, etc.
+- [x] Contrôles de qualité pour les auteurs : panneau « Contrôle qualité » et pastilles par question (info clé manquante, négation, réponses identiques, bonne réponse la plus longue, thème de moins de 8 questions, indice qui contient la réponse…). Des conseils, sans blocage.
 - [ ] Numéro de version du moteur dans chaque export.
 - [ ] Embarquer SheetJS et les polices pour les réseaux restreints.
 - [ ] Champs « conséquence » et « règle à retenir » dans le contenu (feedback à 4 niveaux).
@@ -295,3 +296,4 @@ Rapport complet : [`recherche/deep-research-serious-games-b2b.md`](recherche/dee
 | 2026-11-27 | Le réglage du tableau des scores, introuvable en bas de l'onglet Règles, passe dans un **onglet « Scores » dédié** (avec son état dans le libellé), et le jeu affiche dès l'accueil « Aucun score pour l'instant : soyez le premier ! » quand il est activé. Le message d'export rappelle l'état de l'option |
 | 2026-11-27 (scores) | **Limite constatée** : sur SharePoint, une page HTML envoyée est affichée dans un cadre isolé qui bloque le stockage du navigateur, donc le tableau des scores ne survit pas à l'actualisation. Reproduit avec un cadre isolé. Décision : tester l'hébergement en dossier ; si le stockage y est aussi bloqué, tant pis pour la persistance des scores. Message du jeu rendu explicite |
 | 2026-11-27 (suite) | Test de l'envoi en dossier sur SharePoint : même blocage du stockage. **Décision : on renonce à la persistance des scores et records sur SharePoint** ; le jeu garde un tableau valable le temps d'une visite. On passe au sujet suivant |
+| 2026-11-27 (qualité) | **Contrôle qualité dans l'éditeur** : 12 règles automatiques sur la forme (info clé, négations, réponses identiques ou trop longues, thèmes trop petits, indices qui donnent la réponse…), en conseils non bloquants, pour des auteurs qui ne sont pas pédagogues |

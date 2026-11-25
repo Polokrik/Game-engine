@@ -8,7 +8,7 @@ Un outil interne qui crée des jeux de connaissances en HTML. L'auteur saisit ou
 ## [ATEL-2] Créer un jeu en 8 étapes
 1. **Ouvrir l'Atelier.** En haut, choisir le **Type de jeu** : Quiz à paliers ou Champion solo.
 2. **Identité visuelle** (premier onglet) : titre, phrase d'accroche, message de fin ; couleurs (palettes prêtes ou codes hexadécimaux, et palettes de marque enregistrables) ; police ; logo (2 Mo au maximum).
-3. **Questions** (deuxième onglet) : saisir les questions une par une, ou importer un fichier Excel ([ATEL-3]).
+3. **Questions** (deuxième onglet) : saisir les questions une par une, ou importer un fichier Excel ([ATEL-3]). Un panneau « Contrôle qualité » et des pastilles orange signalent des conseils sur la forme : info clé manquante, négation dans l'énoncé, réponses identiques, bonne réponse nettement plus longue, thème trop petit… Ce sont des conseils, ils ne bloquent pas l'export.
 4. **Règles** (troisième onglet) : les règles du jeu choisi ([ATEL-4]).
 5. **Sons** (quatrième onglet) : activer ou non les sons, régler le volume, remplacer un son par un autre fichier. **Scores** (cinquième onglet) : activer le tableau des scores si le jeu est hébergé sur SharePoint ([ATEL-5]).
 6. **Aperçu** : à droite de l'écran ; c'est le vrai jeu, on peut y jouer. Le menu « Afficher » saute à un écran précis.
