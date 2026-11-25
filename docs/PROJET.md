@@ -51,6 +51,7 @@ Simplifier le travail des équipes métiers et des équipes de création de cont
 
 **Limites connues**
 - Les scores des jeux ne remontent pas au LMS : records et maîtrise restent dans le navigateur du joueur.
+- **Sur SharePoint, le stockage du navigateur est bloqué** : scores, records et maîtrise par thème ne durent que le temps d'une visite. La « progression par thème » du Champion solo n'y est donc pas conservée.
 - Les jeux exportés recopient le code du lecteur : une correction du moteur ne se propage pas aux jeux déjà exportés (mitigé par la décision 11).
 - Un fichier Excel par jeu : pas de banque de contenus partagée entre les jeux.
 - Interface en français uniquement ; accessibilité (clavier, lecteurs d'écran) non auditée, à prévoir plus tard.
@@ -197,7 +198,7 @@ Le SCORM propre au jeu n'est plus une priorité : Rise assure le suivi du module
 
 **Atelier et jeux**
 - [x] Tableau des scores local (option A de la section 11).
-- [ ] Tester le tableau des scores avec un hébergement SharePoint **en dossier** (la page HTML envoyée bloque le stockage). Si le dossier le bloque aussi, renoncer à la persistance des scores sur SharePoint.
+- [x] Tableau des scores sur SharePoint : testé en page HTML et en dossier, le stockage est bloqué dans les deux cas. **Décision : pas de persistance des scores sur SharePoint** ; le tableau tient le temps d'une visite.
 - [ ] Classement commun (option B, liste SharePoint) : à construire seulement si une équipe le demande.
 - [ ] Animations et micro-effets (le côté fun).
 - [ ] Contrôles de qualité pour les auteurs : info clé manquante, thème de moins de 8 questions, réponses trop longues ou trop proches, etc.
@@ -223,14 +224,14 @@ Le SCORM propre au jeu n'est plus une priorité : Rise assure le suivi du module
 | **Assistant IA limité par l'outil** | Copilot et l'outil maison ont des limites de taille et de fonctions | Prompt compact ; connaissance en fichiers ; test sur les deux outils |
 | **Capacités d'outils périmées** | Rise évolue | Fiche datée, relue régulièrement |
 | **Droits d'auteur des sons** | Extraits d'émissions de télévision, désormais **publics** : fichiers du dépôt public et page GitHub Pages | Décision du porteur (2026-11-25) ; validation juridique ou sons libres de droits ; `PUBLIER_SONS=false` retire les sons de la page |
-| **Tableau des scores** | **Une page HTML envoyée sur SharePoint est affichée dans un cadre isolé qui bloque le stockage du navigateur : les scores disparaissent à l'actualisation** (constaté) ; noms saisis librement | Hébergement en dossier à tester ; sinon scores valables le temps de la visite seulement ; voir la section 11 |
+| **Tableau des scores et records** | **Sur SharePoint (page HTML ou dossier), le stockage du navigateur est bloqué** : scores, records et maîtrise par thème disparaissent à l'actualisation (constaté) ; noms saisis librement | Décision : pas de persistance sur SharePoint ; le jeu l'annonce ; voir la section 11 |
 | **Accessibilité** | Clavier, lecteurs d'écran, contrastes ; à prévoir plus tard | Phase 5 ; chrono déjà désactivable |
 | **Jeux exportés figés** | Le code du lecteur est recopié dans chaque export | Risque assumé : modifiable depuis Rise ; numéro de version à ajouter |
 | **Dépendances externes** | cdnjs et Google Fonts peuvent être bloqués sur le réseau | Embarquer les bibliothèques |
 
 ## 11. Le tableau des scores façon arcade
 
-**État (2026-11-25) : l'option A est construite, désactivée par défaut, et destinée aux jeux hébergés sur SharePoint** (inutile dans Rise ou un LMS). **Limite constatée le 2026-11-27 : avec l'envoi d'une page HTML sur SharePoint, le stockage du navigateur est bloqué et les scores disparaissent à l'actualisation** (ils tiennent le temps de la visite). Solutions : héberger en dossier SharePoint (à tester), sinon renoncer à la persistance. Un classement partagé demanderait une brique côté serveur (par exemple Microsoft Forms ou Power Automate), non retenue pour l'instant (classement local, dans les deux jeux et dans les HTML exportés). L'auteur choisit dans l'onglet **Scores** : activer ou non, le mode de nom (3 initiales, pseudo généré, pseudo libre filtré), le nombre de scores gardés et des mots interdits en plus. Le filtre est un filtre de base : il refuse les insultes courantes même écrites avec des chiffres ou des points, mais ne remplace pas une modération. Les options B et C restent à décider.
+**État (2026-11-25) : l'option A est construite, désactivée par défaut, et destinée aux jeux hébergés sur SharePoint** (inutile dans Rise ou un LMS). **Limite constatée le 2026-11-27 : avec l'envoi d'une page HTML sur SharePoint, le stockage du navigateur est bloqué et les scores disparaissent à l'actualisation** (ils tiennent le temps de la visite). Le dossier SharePoint n'y change rien (testé) : **pas de persistance des scores sur SharePoint**, décision prise. Un classement partagé demanderait une brique côté serveur (par exemple Microsoft Forms ou Power Automate), non retenue pour l'instant (classement local, dans les deux jeux et dans les HTML exportés). L'auteur choisit dans l'onglet **Scores** : activer ou non, le mode de nom (3 initiales, pseudo généré, pseudo libre filtré), le nombre de scores gardés et des mots interdits en plus. Le filtre est un filtre de base : il refuse les insultes courantes même écrites avec des chiffres ou des points, mais ne remplace pas une modération. Les options B et C restent à décider.
 
 L'idée : le joueur inscrit son nom à la fin de la partie, comme sur une borne d'arcade. Elle sert le côté fun. Les travaux sur la gamification suggèrent que classements et points ajoutés en surface ne suffisent pas à motiver sur la durée (source 7 de `recherche/sources.md`, obtenue sur des élèves en mathématiques) : c'est une **couche de plaisir**, à relier à la progression personnelle (« votre meilleur score »).
 
@@ -293,3 +294,4 @@ Rapport complet : [`recherche/deep-research-serious-games-b2b.md`](recherche/dee
 | 2026-11-26 (assistant) | **Assistant IA, version 0.2** : prompt plus précis avec procédure pour explorer les fichiers, base de connaissances restructurée en 8 fichiers et 51 sections, exemples, guide de l'Atelier, liste de ce qui manque. Constat : les fichiers Markdown ne sont pas acceptés comme connaissance par Copilot Studio, d'où une conversion en Word |
 | 2026-11-27 | Le réglage du tableau des scores, introuvable en bas de l'onglet Règles, passe dans un **onglet « Scores » dédié** (avec son état dans le libellé), et le jeu affiche dès l'accueil « Aucun score pour l'instant : soyez le premier ! » quand il est activé. Le message d'export rappelle l'état de l'option |
 | 2026-11-27 (scores) | **Limite constatée** : sur SharePoint, une page HTML envoyée est affichée dans un cadre isolé qui bloque le stockage du navigateur, donc le tableau des scores ne survit pas à l'actualisation. Reproduit avec un cadre isolé. Décision : tester l'hébergement en dossier ; si le stockage y est aussi bloqué, tant pis pour la persistance des scores. Message du jeu rendu explicite |
+| 2026-11-27 (suite) | Test de l'envoi en dossier sur SharePoint : même blocage du stockage. **Décision : on renonce à la persistance des scores et records sur SharePoint** ; le jeu garde un tableau valable le temps d'une visite. On passe au sujet suivant |

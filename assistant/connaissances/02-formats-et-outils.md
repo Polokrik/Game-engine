@@ -35,7 +35,7 @@ Version 0.2 · 2026-11-26 · **À consulter pour savoir ce que les outils font o
 **Points communs aux deux jeux**
 - Sons facultatifs : le joueur est prévenu et choisit de jouer avec ou sans ; un bouton permet de les couper.
 - Chrono facultatif.
-- **Tableau des scores façon arcade : une option**, désactivée par défaut. Le joueur entre 3 initiales ou un pseudo généré, selon le réglage ; un filtre refuse les insultes courantes. Les scores restent dans le navigateur du joueur : ils ne sont pas partagés entre les joueurs. **Ils ne sont conservés que si l'hébergement autorise le stockage du navigateur.** Constaté : une page HTML envoyée sur SharePoint est affichée dans un cadre isolé qui bloque ce stockage, et les scores ne durent alors que le temps de la visite ; l'hébergement en dossier SharePoint `[à tester]`. Inutile dans Rise ou le LMS.
+- **Tableau des scores façon arcade : une option**, désactivée par défaut. Le joueur entre 3 initiales ou un pseudo généré, selon le réglage ; un filtre refuse les insultes courantes. Les scores restent dans le navigateur du joueur : ils ne sont pas partagés entre les joueurs. **Ils ne sont conservés que si l'hébergement autorise le stockage du navigateur.** Constaté : sur SharePoint (page HTML ou dossier), la page est affichée dans un cadre isolé qui bloque ce stockage, et les scores ne durent alors que le temps de la visite. Même limite pour les records et la maîtrise par thème du Champion solo. Inutile dans Rise ou le LMS.
 
 ## [FORM-3] Rise, SharePoint et LMS : hébergement et suivi
 **À retenir : le suivi des personnes est tenu par Rise au niveau du module, pas au niveau du jeu.**
