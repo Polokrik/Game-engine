@@ -1,0 +1,53 @@
+name: Publier l'atelier sur GitHub Pages
+
+# Publie UNE page (l'atelier) : le reste du dépôt (docs, assistant, sources) n'est pas exposé.
+# Par défaut la page est publiée SANS sons (extraits d'émissions, non redistribuables au public).
+# Pour publier aussi les sons : Settings > Secrets and variables > Actions > Variables > PUBLIER_SONS = true
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "atelier/**"
+      - ".github/workflows/pages.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploiement:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploiement.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Construire la page
+        env:
+          PUBLIER_SONS: ${{ vars.PUBLIER_SONS }}
+        run: |
+          if [ "$PUBLIER_SONS" = "true" ]; then
+            python3 atelier/construire.py --sortie _site/index.html
+          else
+            python3 atelier/construire.py --sans-sons --sortie _site/index.html
+            if grep -q "data:audio/mpeg;base64" _site/index.html; then
+              echo "Des sons se sont glissés dans la version publique : arrêt."
+              exit 1
+            fi
+          fi
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+      - id: deploiement
+        uses: actions/deploy-pages@v4

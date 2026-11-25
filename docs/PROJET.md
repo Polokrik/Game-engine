@@ -70,13 +70,14 @@ Atelier (éditeur)  --écrit-->  Édition (.json)  --lue par-->  Lecteur du jeu
 
 | Chemin | Rôle |
 |---|---|
-| `atelier/atelier-jeux.html` | **Le fichier à ouvrir** : page complète sans sons, générée et versionnée |
+| `atelier/atelier-jeux.html` | **Le fichier à ouvrir** : page complète avec les sons par défaut, générée et versionnée |
 | `atelier/atelier.src.html` | Modèle de construction : éditeur, lecteur du quiz, styles. Ne s'ouvre pas seul |
 | `atelier/src/commun.js` | Briques partagées : thème visuel, création d'éléments, moteur de sons |
 | `atelier/src/champion.js` | Lecteur du Champion solo et sa feuille de style |
-| `atelier/sons/` | Fichiers audio (non versionnés) et `packs.json` (correspondance événement, fichier) |
-| `atelier/construire.py` | Assemble le modèle, `src/` et `sons/` |
-| `atelier/dist/` | Fichiers générés avec les sons (non versionnés) : `atelier-jeux-avec-sons.html` et `atelier-artefact.html` |
+| `atelier/sons/` | Fichiers audio du pack par défaut (usage interne), `packs.json` et `durees.json` |
+| `atelier/construire.py` | Assemble le modèle, `src/` et `sons/` (options `--sans-sons`, `--sortie`) |
+| `atelier/dist/` | Fichiers générés, non versionnés : `atelier-artefact.html` |
+| `.github/workflows/pages.yml` | Publication de la page de l'atelier sur GitHub Pages (sans sons par défaut) |
 | `assistant/` | Documentation de l'assistant IA : prompt système, connaissances, gabarits, jeu d'évaluation |
 | `docs/` | Ce document et la recherche |
 
@@ -147,6 +148,7 @@ Atelier (éditeur)  --écrit-->  Édition (.json)  --lue par-->  Lecteur du jeu
 | **Rise** | **Fonctionne (hébergement)** | Rise héberge les sorties HTML des jeux et permet de construire un module complet autour. Export SCORM vers le LMS. Le suivi est tenu par le module |
 | **LMS** | Via Rise | Le SCORM de Rise se met à jour depuis Rise, y compris quand il est déjà hébergé dans le LMS |
 | Posit Connect (GCP) | Dernier recours | Publication d'un HTML statique possible ; contrôle d'accès à régler dans le tableau de bord |
+| **GitHub Pages** | Préparé, à activer | Publie l'**éditeur seul**, sur une adresse **publique**, sans sons par défaut. Pratique pour partager l'outil ; les jeux d'entreprise restent sur SharePoint ou dans Rise |
 
 **À tester avant de généraliser** (dans Rise, puis dans le LMS) :
 - les records et le futur tableau des scores, qui reposent sur le stockage du navigateur : un jeu intégré dans une fenêtre imbriquée peut le voir bloqué ou vidé ;
@@ -173,6 +175,7 @@ Le SCORM propre au jeu n'est plus une priorité : Rise assure le suivi du module
 **Projet et dépôt**
 - [x] Installer le projet dans ce dépôt (atelier, sources, build, recherche).
 - [ ] Mettre en place l'intégration continue (build, tests de navigateur).
+- [ ] Activer GitHub Pages : fusionner dans `main`, puis Settings > Pages > Source : GitHub Actions. Vérifier que le forfait du compte le permet pour un dépôt privé et que la publication publique de l'outil est acceptable pour l'entreprise.
 - [ ] Nettoyer les scripts de test (`atelier/tests/e2e-brouillons/`).
 
 **Terrain (phase 1)**
@@ -210,7 +213,7 @@ Le SCORM propre au jeu n'est plus une priorité : Rise assure le suivi du module
 | **Contenu généré faux** | Erreurs factuelles, distracteurs faibles, surtout avec des modèles moins performants | Passage source cité ; validation par l'expert métier ; jeu d'évaluation |
 | **Assistant IA limité par l'outil** | Copilot et l'outil maison ont des limites de taille et de fonctions | Prompt compact ; connaissance en fichiers ; test sur les deux outils |
 | **Capacités d'outils périmées** | Rise évolue | Fiche datée, relue régulièrement |
-| **Droits d'auteur des sons** | Extraits d'émissions de télévision, même en usage interne | Validation juridique ou sons libres de droits ; packs non versionnés |
+| **Droits d'auteur des sons** | Extraits d'émissions de télévision, versionnés dans le dépôt privé ; une page GitHub Pages est publique | Page Pages publiée sans sons par défaut ; validation juridique ou sons libres de droits |
 | **Tableau des scores** | Noms saisis librement : insultes, données personnelles ; partage impossible sans stockage commun | Voir la section 11 |
 | **Accessibilité** | Clavier, lecteurs d'écran, contrastes ; à prévoir plus tard | Phase 5 ; chrono déjà désactivable |
 | **Jeux exportés figés** | Le code du lecteur est recopié dans chaque export | Risque assumé : modifiable depuis Rise ; numéro de version à ajouter |
@@ -271,3 +274,4 @@ Rapport complet : [`recherche/deep-research-serious-games-b2b.md`](recherche/dee
 | 2026-11-16 | Sons facultatifs avec avertissement ; second jeu = Champion solo, adapté au solo ; l'erreur ne termine plus la partie par défaut |
 | 2026-11-19 | Projet hébergé dans le dépôt `Polokrik/Game-engine` ; ajout du chantier « assistant IA ingénieur pédagogique » ; recherche intégrée |
 | 2026-11-19 | **Produit interne, usage interne uniquement.** Outils IA des clients : Copilot, outil maison, GCP en exception. SharePoint et Rise hébergent les jeux ; suivi tenu par Rise ; SCORM via Rise. Kahoot écarté. L'assistant propose toujours 2 ou 3 formats avec avantages et limites. Les auteurs sont responsables de leurs jeux exportés. Chrono activable ou désactivable. L'accessibilité vient plus tard. Garder un côté fun. Tableau des scores façon arcade à cadrer |
+| 2026-11-25 | Sons par défaut remis dans le build et versionnés dans le dépôt privé (usage interne). Publication sur GitHub Pages préparée : outil seul, public, **sans sons par défaut** ; les sons peuvent être publiés avec la variable `PUBLIER_SONS=true` |

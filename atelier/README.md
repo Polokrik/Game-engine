@@ -11,22 +11,29 @@ Deux jeux : **Quiz à paliers** et **Champion solo** (Sprint, La série, Trouve 
 ## Organisation
 | Chemin | Rôle |
 |---|---|
-| `atelier-jeux.html` | **Le fichier à ouvrir.** Page complète, sans sons, générée et versionnée. Ne pas la modifier à la main |
+| `atelier-jeux.html` | **Le fichier à ouvrir.** Page complète avec les sons par défaut, générée et versionnée. Ne pas la modifier à la main |
 | `atelier.src.html` | Modèle de construction (éditeur, lecteur du quiz, styles). Ne s'ouvre pas seul : il affiche un message |
 | `src/commun.js` | Briques partagées : thème visuel, création d'éléments, moteur de sons |
 | `src/champion.js` | Lecteur du Champion solo et sa feuille de style |
-| `sons/packs.json` | Correspondance événement, fichier audio. Les fichiers eux-mêmes ne sont pas versionnés (droits d'auteur) : sans eux, l'atelier fonctionne sans pack de sons par défaut |
+| `sons/` | Fichiers audio du pack par défaut (extraits d'émissions de télévision, **usage interne**), `packs.json` (correspondance événement, fichier) et `durees.json` (durées, pour construire sans `ffprobe`) |
 | `construire.py` | Assemble le modèle, `src/` et `sons/` dans `dist/` |
-| `dist/` | Fichiers générés avec les sons, non versionnés : `atelier-jeux-avec-sons.html` et `atelier-artefact.html` |
+| `dist/` | Fichiers générés, non versionnés : `atelier-artefact.html` (fragment publié comme artefact Claude) |
 | `tests/e2e-brouillons/` | Scripts de test de navigateur (Playwright) écrits pendant le développement, à nettoyer |
 
 ## Construire
 ```bash
 python3 atelier/construire.py
 ```
-Produit toujours `atelier-jeux.html` (sans sons, à versionner). Si des fichiers audio sont présents dans `sons/`, produit aussi `dist/atelier-jeux-avec-sons.html` et `dist/atelier-artefact.html` (fragment sans en-tête, tel que publié comme artefact Claude). `ffprobe` sert à lire la durée des sons.
+Produit `atelier-jeux.html` (avec sons, à versionner) et `dist/atelier-artefact.html` (fragment sans en-tête, tel que publié comme artefact Claude).
 
-Après toute modification dans `src/` ou `atelier.src.html`, relancer la commande **et versionner le nouveau `atelier-jeux.html`**.
+| Option | Effet |
+|---|---|
+| `--sans-sons` | N'embarque aucun son |
+| `--sortie CHEMIN` | Écrit uniquement la page complète à `CHEMIN` (utilisé par la publication GitHub Pages) |
+
+Après toute modification dans `src/`, `sons/` ou `atelier.src.html`, relancer la commande **et versionner le nouveau `atelier-jeux.html`**.
+
+La publication sur GitHub Pages (workflow `.github/workflows/pages.yml`) construit la page **sans sons** par défaut : voir le `README.md` à la racine.
 
 ## À savoir
 - Un jeu exporté recopie le code de son lecteur : il fonctionne sans l'atelier, mais ne se met pas à jour tout seul.

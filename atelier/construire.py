@@ -1,15 +1,19 @@
 #!/usr/bin/env python3
 """Assemble l'atelier : modèle (atelier.src.html) + code des jeux (src/) + sons (sons/).
-Produit :
-  atelier/atelier-jeux.html             page complète SANS sons : versionnée, prête à ouvrir ou à héberger
-  atelier/dist/atelier-jeux-avec-sons.html   page complète AVEC les sons de sons/ (non versionnée)
-  atelier/dist/atelier-artefact.html    fragment sans en-tête, tel que publié comme artefact Claude (avec sons)
-Usage : python3 atelier/construire.py   (ffprobe lit les durées des sons, s'il y en a)"""
-import base64, json, pathlib, re, subprocess
+
+Usage :
+  python3 atelier/construire.py                    construit atelier/atelier-jeux.html (AVEC sons, versionné)
+                                                   et atelier/dist/atelier-artefact.html (fragment publié comme artefact Claude)
+  python3 atelier/construire.py --sans-sons        idem, sans aucun son embarqué
+  python3 atelier/construire.py --sortie CHEMIN    écrit uniquement la page complète à CHEMIN (publication GitHub Pages)
+Les options se combinent. Les durées des sons sont lues avec ffprobe, ou à défaut dans sons/durees.json."""
+import argparse, base64, json, pathlib, re, subprocess
 
 ici = pathlib.Path(__file__).parent
-dist = ici / "dist"
-dist.mkdir(exist_ok=True)
+ap = argparse.ArgumentParser(description="Assemble l'atelier de jeux.")
+ap.add_argument("--sans-sons", action="store_true", help="n'embarque aucun son")
+ap.add_argument("--sortie", help="écrit uniquement la page complète à ce chemin")
+args = ap.parse_args()
 
 def remplacer(t, debut, fin, contenu):
     motif = re.compile(re.escape(debut) + r".*?" + re.escape(fin), re.S)
@@ -17,15 +21,20 @@ def remplacer(t, debut, fin, contenu):
     assert n == 1, "marqueurs introuvables : " + debut
     return t2
 
+fichier_durees = ici / "sons" / "durees.json"
+durees = json.loads(fichier_durees.read_text(encoding="utf-8")) if fichier_durees.exists() else {}
+
 def duree(f):
     try:
-        return round(float(subprocess.check_output(["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", str(f)]).decode().strip()), 1)
+        d = round(float(subprocess.check_output(["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", str(f)]).decode().strip()), 1)
+        durees[f.name] = d
+        return d
     except Exception:
-        return None
+        return durees.get(f.name)
 
 def sons_js():
     packs = json.loads((ici / "sons" / "packs.json").read_text(encoding="utf-8"))
-    lignes, manquants, presents = [], [], 0
+    lignes, manquants = [], []
     for var, pistes in packs.items():
         if var.startswith("_"):
             continue
@@ -35,10 +44,9 @@ def sons_js():
             if not f.exists():
                 manquants.append(nom)
                 continue
-            presents += 1
             out[cle] = {"nom": nom, "duree": duree(f), "src": "data:audio/mpeg;base64," + base64.b64encode(f.read_bytes()).decode()}
         lignes.append("var " + var + " = " + json.dumps(out, ensure_ascii=False, separators=(",", ":")) + ";")
-    return "\n".join(lignes), manquants, presents
+    return "\n".join(lignes), manquants
 
 SANS_SONS = "var SONS_DEFAUT = {};\nvar SONS_QPUC = {};"
 ENTETE = ('<!doctype html>\n<html lang="fr">\n<head>\n<meta charset="utf-8">\n'
@@ -50,25 +58,29 @@ modele = (ici / "atelier.src.html").read_text(encoding="utf-8")
 code = (ici / "src" / "commun.js").read_text(encoding="utf-8") + "\n" + (ici / "src" / "champion.js").read_text(encoding="utf-8")
 assert "</script" not in code
 
-def assembler(sons):
-    t = remplacer(modele, "/*SONS_DEBUT*/", "/*SONS_FIN*/", sons)
-    return remplacer(t, "/*MOTEURS_DEBUT*/", "/*MOTEURS_FIN*/", code)
-
-def complet(fragment):
-    return ENTETE + fragment + "\n</body>\n</html>\n"
-
-# 1. version versionnée : jamais d'audio
-(ici / "atelier-jeux.html").write_text(complet(assembler(SANS_SONS)), encoding="utf-8")
-print("construit :", ici / "atelier-jeux.html", "(sans sons, versionné)")
-
-# 2. versions avec sons, si les fichiers audio sont présents
-js, manquants, presents = sons_js()
-if presents:
-    avec = assembler(js)
-    (dist / "atelier-artefact.html").write_text(avec, encoding="utf-8")
-    (dist / "atelier-jeux-avec-sons.html").write_text(complet(avec), encoding="utf-8")
-    print("construit :", dist / "atelier-jeux-avec-sons.html", "et", dist / "atelier-artefact.html")
+if args.sans_sons:
+    sons, manquants = SANS_SONS, []
 else:
-    print("aucun fichier audio dans sons/ : seule la version sans sons a été construite")
-if manquants:
-    print("sons absents :", ", ".join(manquants))
+    sons, manquants = sons_js()
+    if manquants:
+        print("ATTENTION, sons absents de sons/ :", ", ".join(manquants))
+
+t = remplacer(modele, "/*SONS_DEBUT*/", "/*SONS_FIN*/", sons)
+t = remplacer(t, "/*MOTEURS_DEBUT*/", "/*MOTEURS_FIN*/", code)
+page = ENTETE + t + "\n</body>\n</html>\n"
+mode = "sans sons" if args.sans_sons else "avec sons"
+
+if args.sortie:
+    sortie = pathlib.Path(args.sortie)
+    sortie.parent.mkdir(parents=True, exist_ok=True)
+    sortie.write_text(page, encoding="utf-8")
+    print("construit :", sortie, "(" + mode + ")")
+else:
+    (ici / "atelier-jeux.html").write_text(page, encoding="utf-8")
+    dist = ici / "dist"
+    dist.mkdir(exist_ok=True)
+    (dist / "atelier-artefact.html").write_text(t, encoding="utf-8")
+    print("construit :", ici / "atelier-jeux.html", "(" + mode + ") et", dist / "atelier-artefact.html")
+
+if not args.sans_sons and durees:
+    fichier_durees.write_text(json.dumps(durees, indent=2, ensure_ascii=False, sort_keys=True) + "\n", encoding="utf-8")
