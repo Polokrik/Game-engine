@@ -346,6 +346,24 @@ input.hex{font-family:ui-monospace,"Cascadia Mono",Consolas,monospace;font-size:
           <h2>Apprendre de ses erreurs</h2>
           <label class="coche"><input type="checkbox" id="f-reposer" data-c="champion.reposerErreurs"><span>Reposer plus tard une question ratée, pour retenter la même question</span></label>
         </div>
+        <div class="bloc">
+          <h2>Tableau des scores</h2>
+          <label class="coche"><input type="checkbox" id="f-scores-actif" data-c="scores.actif"><span>Afficher un tableau des scores façon borne d'arcade (pour un jeu hébergé sur SharePoint)</span></label>
+          <div class="grille">
+            <label class="champ"><span>Nom du joueur</span>
+              <select id="f-scores-mode" data-c="scores.mode">
+                <option value="initiales">3 initiales (style arcade)</option>
+                <option value="genere">Pseudo généré, sans saisie (le plus sûr)</option>
+                <option value="libre">Pseudo libre, filtré</option>
+              </select>
+            </label>
+            <label class="champ"><span>Scores gardés</span>
+              <select id="f-scores-taille" data-c="scores.taille" data-num="1"><option value="5">5</option><option value="10">10</option><option value="20">20</option></select>
+            </label>
+          </div>
+          <label class="champ"><span>Mots interdits en plus, séparés par des virgules</span><input type="text" id="f-scores-mots" data-scores-mots placeholder="Par exemple le nom d'un concurrent"></label>
+          <p class="aide">Option à activer pour un jeu hébergé sur SharePoint. Les scores restent dans le navigateur du joueur : ce poste, ce navigateur, sans partage entre les joueurs. Inutile pour un jeu intégré dans Rise ou un LMS (le stockage du navigateur peut y être bloqué). Un filtre de base refuse les insultes courantes ; le pseudo généré évite toute saisie libre.</p>
+        </div>
       </div>
       <!-- SONS -->
       <div class="panneau" id="p-sons" role="tabpanel" aria-labelledby="tab-sons" hidden>
@@ -535,6 +553,195 @@ function creerMoteurSons(pistes, volumePct) {
   };
 }
 
+/* Tableau des scores façon arcade. Le classement est gardé dans le navigateur du joueur (ce poste, ce navigateur).
+   config : { actif, mode: "initiales" | "genere" | "libre", taille, motsInterdits: [] }
+   cle : clé de stockage ; persistant : false pour ne rien écrire dans le navigateur (aperçu de l'éditeur). */
+function creerTableauScores(config, cle, persistant) {
+  config = config || {};
+  var actif = config.actif === true; /* désactivé tant que l'auteur ne l'a pas demandé */
+  var mode = config.mode === "libre" || config.mode === "genere" ? config.mode : "initiales";
+  var taille = Math.max(3, Math.min(50, Math.round(Number(config.taille)) || 10));
+  var stockOk = true, liste = [];
+
+  /* Filtre de base : minuscules, sans accents, chiffres et symboles courants remplacés par leurs lettres, sans espaces ni ponctuation. */
+  function simplifier(s) {
+    s = String(s == null ? "" : s).normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+    s = s.replace(/[@4]/g, "a").replace(/3/g, "e").replace(/[1!|]/g, "i").replace(/0/g, "o").replace(/[5$]/g, "s").replace(/7/g, "t");
+    return s.replace(/[^a-z]/g, "");
+  }
+  /* Mots refusés seulement si le nom entier est ce mot (évite de refuser « Monique » ou « Constance »). */
+  var EXACTS = ["con", "conne", "cons", "connes", "cul", "culs", "zob", "bite", "bites", "pute", "putes", "pd", "pede", "pedes", "pedo",
+    "fdp", "ntm", "nique", "niquer", "kkk", "sex", "sexe", "nazi", "nazis", "dick", "cock", "cunt", "fuck", "shit", "slut", "whore",
+    "bitch", "ptn", "tdc"].map(simplifier);
+  /* Mots refusés partout dans le nom. */
+  var CONTENUS = ["connard", "connasse", "salope", "salaud", "encule", "putain", "merde", "niquetamere", "filsdepute", "batard",
+    "pedophile", "negre", "bougnoule", "youpin", "hitler", "fuck", "shit", "bitch", "asshole", "nigger", "nigga", "faggot", "enfoire",
+    "branleur", "gouine", "tarlouze", "pouffiasse", "suceuse"].map(simplifier);
+  var EXTRAS = (config.motsInterdits || []).map(simplifier).filter(Boolean);
+
+  function nettoyer(brut) {
+    var s = String(brut == null ? "" : brut).trim();
+    if (mode === "initiales") return s.normalize("NFD").replace(/[̀-ͯ]/g, "").toUpperCase().replace(/[^A-Z]/g, "").slice(0, 3);
+    return s.replace(/[^A-Za-zÀ-ÖØ-öø-ÿ0-9 _.\-]/g, "").replace(/\s+/g, " ").trim().slice(0, mode === "genere" ? 24 : 12);
+  }
+  function verifier(brut) {
+    var nom = nettoyer(brut);
+    if (mode === "initiales" ? nom.length !== 3 : nom.length < 2) {
+      return { ok: false, raison: mode === "initiales" ? "Entrez exactement 3 lettres." : "Entrez au moins 2 caractères." };
+    }
+    var n = simplifier(nom), complet = simplifier(brut); /* on contrôle aussi la saisie avant troncature */
+    var interdit = !n || EXACTS.indexOf(n) >= 0
+      || CONTENUS.some(function (c) { return n.indexOf(c) >= 0 || complet.indexOf(c) >= 0; })
+      || EXTRAS.some(function (e) { return e.length <= 3 ? n === e : (n.indexOf(e) >= 0 || complet.indexOf(e) >= 0); });
+    if (interdit) return { ok: false, raison: "Ce nom n'est pas accepté. Choisissez-en un autre." };
+    return { ok: true, nom: nom };
+  }
+
+  var ADJ = ["Fougueux", "Rusé", "Zen", "Malin", "Rapide", "Vaillant", "Curieux", "Joyeux", "Audacieux", "Futé",
+    "Flamboyant", "Rêveur", "Costaud", "Sage", "Astucieux", "Intrépide", "Espiègle", "Radieux", "Têtu", "Gourmand"];
+  var ANI = ["Panda", "Lynx", "Hibou", "Castor", "Renard", "Lama", "Koala", "Dauphin", "Faucon", "Blaireau",
+    "Hérisson", "Pingouin", "Tigre", "Phoque", "Morse", "Lézard", "Bison", "Ours", "Cerf", "Loup"];
+  function pseudoAuto() {
+    return ANI[Math.floor(Math.random() * ANI.length)] + " " + ADJ[Math.floor(Math.random() * ADJ.length)];
+  }
+
+  function trier() {
+    liste.sort(function (a, b) { return b.score - a.score || a.date - b.date; });
+    liste = liste.slice(0, taille);
+  }
+  function charger() {
+    if (!persistant) return;
+    try {
+      var t = window.localStorage.getItem(cle);
+      if (t) {
+        var a = JSON.parse(t);
+        if (Array.isArray(a)) liste = a.filter(function (x) { return x && typeof x.nom === "string" && isFinite(x.score); });
+      }
+    } catch (e) { stockOk = false; }
+  }
+  function sauver() {
+    if (!persistant) return;
+    try { window.localStorage.setItem(cle, JSON.stringify(liste)); } catch (e) { stockOk = false; }
+  }
+  charger();
+  trier();
+
+  return {
+    actif: actif, mode: mode, taille: taille, persistant: !!persistant,
+    stockOk: function () { return stockOk; },
+    lire: function () { return liste.slice(); },
+    qualifie: function (score) {
+      score = Number(score);
+      return actif && score > 0 && (liste.length < taille || score > liste[liste.length - 1].score);
+    },
+    verifier: verifier,
+    pseudoAuto: pseudoAuto,
+    enregistrer: function (nom, score) {
+      var e = { nom: nom, score: Number(score), date: Date.now() };
+      liste.push(e); trier(); sauver();
+      return liste.indexOf(e) + 1;
+    },
+    effacer: function () { liste = []; sauver(); }
+  };
+}
+
+/* Affiche le tableau des scores (et le formulaire de saisie du nom en fin de partie).
+   opts : { score (nombre, en fin de partie), format(score), etat ({fait, rang, nom, pseudo}, conservé par le jeu),
+            rerendre(), compact (écran d'accueil : les 5 premiers, sans formulaire) } */
+function vueTableauScores(el, tableau, opts) {
+  opts = opts || {};
+  if (!tableau || !tableau.actif) return null;
+  var etat = opts.etat || { fait: true, rang: 0, nom: "", pseudo: "" };
+  var format = opts.format || function (s) { return String(s); };
+  var liste = tableau.lire();
+  var compact = !!opts.compact;
+  if (compact && !liste.length) return null;
+  var enjeu = opts.score != null && !etat.fait;
+  var blocs = [el("h2", { text: compact ? "Meilleurs scores" : "Tableau des scores" })];
+
+  function formulaire() {
+    var erreur = el("p", { class: "qz-erreur", role: "alert", text: "" });
+    erreur.hidden = true;
+    function valider(valeur) {
+      var r = tableau.verifier(valeur);
+      if (!r.ok) { erreur.textContent = r.raison; erreur.hidden = false; return; }
+      etat.rang = tableau.enregistrer(r.nom, opts.score); etat.nom = r.nom; etat.fait = true;
+      opts.rerendre();
+    }
+    function passer() { etat.fait = true; etat.rang = 0; opts.rerendre(); }
+    var initiales = tableau.mode === "initiales";
+    var boutons, champ;
+    if (tableau.mode === "genere") {
+      if (!etat.pseudo) etat.pseudo = tableau.pseudoAuto();
+      boutons = [
+        el("button", { class: "qz-btn qz-principal", type: "button", "data-focus": "1", text: "Enregistrer mon score", onclick: function () { valider(etat.pseudo); } }),
+        el("button", { class: "qz-btn", type: "button", text: "Un autre pseudo", onclick: function () { etat.pseudo = tableau.pseudoAuto(); opts.rerendre(); } }),
+        el("button", { class: "qz-btn qz-discret", type: "button", text: "Passer", onclick: passer })
+      ];
+      return el("div", { class: "qz-scores-form" }, [
+        el("p", { class: "qz-doux", text: "Nouveau score : " + format(opts.score) + ". Votre pseudo :" }),
+        el("p", { class: "qz-pseudo", text: etat.pseudo }),
+        el("div", { class: "qz-scores-ligne" }, boutons)
+      ]);
+    }
+    champ = el("input", {
+      class: initiales ? "qz-nom-saisie" : "qz-nom-libre", id: "qz-nom-saisie", type: "text",
+      maxlength: initiales ? "3" : "12", autocomplete: "off", spellcheck: "false", "data-focus": "1",
+      placeholder: initiales ? "AAA" : "Votre pseudo"
+    });
+    champ.addEventListener("keydown", function (ev) { if (ev.key === "Enter") { ev.preventDefault(); valider(champ.value); } });
+    if (initiales) {
+      champ.addEventListener("input", function () {
+        champ.value = champ.value.normalize("NFD").replace(/[̀-ͯ]/g, "").toUpperCase().replace(/[^A-Z]/g, "").slice(0, 3);
+      });
+    }
+    return el("div", { class: "qz-scores-form" }, [
+      el("label", { class: "qz-doux", for: "qz-nom-saisie", text: "Nouveau score : " + format(opts.score) + ". " + (initiales ? "Entrez vos 3 initiales :" : "Entrez votre pseudo :") }),
+      el("div", { class: "qz-scores-ligne" }, [
+        champ,
+        el("button", { class: "qz-btn qz-principal", type: "button", text: "Enregistrer mon score", onclick: function () { valider(champ.value); } }),
+        el("button", { class: "qz-btn qz-discret", type: "button", text: "Passer", onclick: passer })
+      ]),
+      erreur
+    ]);
+  }
+
+  if (enjeu && tableau.qualifie(opts.score)) blocs.push(formulaire());
+  else if (enjeu && opts.score > 0) blocs.push(el("p", { class: "qz-doux", text: "Votre score (" + format(opts.score) + ") n'entre pas dans le tableau cette fois." }));
+
+  if (liste.length) {
+    var affiches = compact ? liste.slice(0, 5) : liste;
+    blocs.push(el("ol", { class: "qz-scores-liste" }, affiches.map(function (e, i) {
+      var moi = etat.fait && etat.rang === i + 1 && etat.nom === e.nom;
+      return el("li", { class: "qz-scores-li" + (moi ? " qz-score-moi" : "") }, [
+        el("span", { class: "qz-rang", text: (i + 1) + "." }),
+        el("span", { class: "qz-nom", text: e.nom }),
+        el("span", { class: "qz-pts", text: format(e.score) })
+      ]);
+    })));
+  } else blocs.push(el("p", { class: "qz-doux", text: "Aucun score pour l'instant : soyez le premier !" }));
+
+  if (tableau.persistant && !tableau.stockOk()) {
+    blocs.push(el("p", { class: "qz-doux", text: "Les scores ne sont pas conservés dans ce contexte de lecture : ils disparaîtront à la fermeture." }));
+  } else if (!tableau.persistant) {
+    blocs.push(el("p", { class: "qz-doux", text: "Aperçu : les scores ne sont pas conservés." }));
+  }
+  if (!compact && liste.length) {
+    var effacer = el("button", { class: "qz-btn qz-discret", type: "button", text: "Effacer les scores de ce poste" });
+    effacer.addEventListener("click", function () {
+      if (effacer.getAttribute("data-confirme") !== "1") {
+        effacer.setAttribute("data-confirme", "1"); effacer.textContent = "Confirmer l'effacement";
+        setTimeout(function () { effacer.removeAttribute("data-confirme"); effacer.textContent = "Effacer les scores de ce poste"; }, 4000);
+        return;
+      }
+      tableau.effacer(); etat.rang = 0;
+      if (opts.rerendre) opts.rerendre();
+    });
+    blocs.push(effacer);
+  }
+  return el("section", { class: "qz-scores" }, blocs);
+}
+
 /* Champion solo : lecteur du jeu (3 manches : Sprint, La série, Trouve avant la fin).
    Dépend de fabriquerEl, appliquerTheme et creerMoteurSons (src/commun.js). Recopié tel quel dans les jeux exportés. */
 
@@ -552,6 +759,7 @@ function mountChampion(racine, config, options) {
   function entier(v, def, min, max) { v = Math.round(Number(v)); if (!isFinite(v)) v = def; return Math.max(min, Math.min(max, v)); }
   function propre(x) { return String(x == null ? "" : x).trim(); }
   function pluriel(n, un, plusieurs) { return n + " " + (Math.abs(n) > 1 ? plusieurs : un); }
+  function formatScore(s) { return pluriel(s, "point", "points"); }
 
   var objectif = entier(cSprint.objectif, 9, 1, 99);
   var sprintMax = entier(cSprint.questionsMax, 14, 3, 60);
@@ -614,6 +822,7 @@ function mountChampion(racine, config, options) {
     return vide;
   }
   var stats = chargerStats();
+  var tableauScores = creerTableauScores(config.scores, "qz-scores-" + (meta.id || "defaut"), options.persistance !== false);
   function sauverStats() {
     if (options.persistance === false) return;
     try { window.localStorage.setItem(cleStock, JSON.stringify(stats)); } catch (e) { stockOk = false; }
@@ -639,7 +848,7 @@ function mountChampion(racine, config, options) {
   function arreterChrono() { if (minuterie) { clearInterval(minuterie); minuterie = null; } }
   function nouvellePartie() {
     arreterChrono(); moteur.arreter();
-    etat = { ecran: "accueil", im: -1, manche: null, m: null, q: null, t: null, score: 0, chaine: 0, chaineMax: 0, bilans: {}, reponses: [], final: null, sprintRecord: false, reste: 0 };
+    etat = { ecran: "accueil", im: -1, manche: null, m: null, q: null, t: null, score: 0, chaine: 0, chaineMax: 0, bilans: {}, reponses: [], final: null, sprintRecord: false, reste: 0, scoreEtat: { fait: false, rang: 0, nom: "", pseudo: "" } };
   }
 
   /* ---------- éléments d'interface ---------- */
@@ -759,6 +968,7 @@ function mountChampion(racine, config, options) {
       meta.sousTitre ? el("p", { class: "qz-accroche", text: meta.sousTitre }) : null,
       el("ul", { class: "qz-regles" }, regles.map(function (t) { return el("li", { text: t }); })),
       bas,
+      vueTableauScores(el, tableauScores, { compact: true, format: formatScore }),
       aJoue ? blocRecords() : null,
       aJoue ? blocMaitrise("Votre maîtrise par thème") : null,
       !stockOk && options.persistance !== false ? el("p", { class: "qz-doux", text: "Vos records ne peuvent pas être conservés dans ce contexte de lecture." }) : null
@@ -1110,6 +1320,7 @@ function mountChampion(racine, config, options) {
       nv.score ? el("p", { class: "qc-record", text: "Nouveau record de score !" }) : null,
       el("p", { class: "qz-score", text: "Meilleure série de la partie : " + f.chaineMax + (nv.serie ? " · nouveau record !" : "") }),
       meta.messageFin ? el("p", { class: "qz-accroche", text: meta.messageFin }) : null,
+      vueTableauScores(el, tableauScores, { score: f.score, format: formatScore, etat: etat.scoreEtat, rerendre: function () { rendre(true); } }),
       el("button", { class: "qz-btn qz-principal", type: "button", "data-focus": "1", text: "Rejouer", onclick: function () { nouvellePartie(); rendre(true); } }),
       el("ul", { class: "qc-cartes" }, cartes),
       blocRecords(),
@@ -1303,6 +1514,7 @@ function mountQuiz(racine, config, options) {
   var modeErreur = regles.erreur || "descend";
   var chrono = Number(regles.chrono) || 0;
   var etat = null, minuterie = null, chronoEl = null;
+  var tableauScores = creerTableauScores(config.scores, "qz-scores-" + (meta.id || "defaut"), options.persistance !== false);
 
   /* ---------- sons : facultatifs, le joueur choisit avec ou sans et peut couper à tout moment ---------- */
   var sons = config.sons || {}, pistes = sons.pistes || {};
@@ -1435,7 +1647,8 @@ function mountQuiz(racine, config, options) {
       jokers: { moitie: Number(jk.moitie) || 0, indice: Number(jk.indice) || 0, passer: Number(jk.passer) || 0 },
       resultats: [],
       ordre: questions.map(function (q) { return regles.melangerReponses === false ? q.rep.slice() : melanger(q.rep); }),
-      choix: null, valide: false, masquees: [], indiceVisible: false, reste: 0, bilan: null
+      choix: null, valide: false, masquees: [], indiceVisible: false, reste: 0, bilan: null,
+      scoreEtat: { fait: false, rang: 0, nom: "", pseudo: "" }
     };
   }
   function appliquer(ok) {
@@ -1532,7 +1745,8 @@ function mountQuiz(racine, config, options) {
       el("h1", { text: meta.titre || "Quiz" }),
       meta.sousTitre ? el("p", { class: "qz-accroche", text: meta.sousTitre }) : null,
       el("ul", { class: "qz-regles" }, liste.map(function (t) { return el("li", { text: t }); })),
-      aSons ? vueChoixSon() : el("button", { class: "qz-btn qz-principal", type: "button", "data-focus": "1", text: "Commencer", onclick: function () { demarrer(false); } })
+      aSons ? vueChoixSon() : el("button", { class: "qz-btn qz-principal", type: "button", "data-focus": "1", text: "Commencer", onclick: function () { demarrer(false); } }),
+      vueTableauScores(el, tableauScores, { compact: true, format: fmt })
     ]);
   }
 
@@ -1682,6 +1896,7 @@ function mountQuiz(racine, config, options) {
       el("h1", { class: "qz-gain-final", text: fmt(montant(etat.niveau)) }),
       el("p", { class: "qz-score", text: bonnes + (bonnes > 1 ? " bonnes réponses" : " bonne réponse") + " sur " + n + " · palier " + etat.niveau + " sur " + n }),
       meta.messageFin ? el("p", { class: "qz-accroche", text: meta.messageFin }) : null,
+      vueTableauScores(el, tableauScores, { score: montant(etat.niveau), format: fmt, etat: etat.scoreEtat, rerendre: function () { rendre(true); } }),
       el("button", { class: "qz-btn qz-principal", type: "button", "data-focus": "1", text: "Rejouer", onclick: function () { nouvellePartie(); rendre(true); } }),
       el("section", { class: "qz-memo" }, [
         el("h2", { text: "Fiche mémo" }),
@@ -1839,6 +2054,24 @@ const PLAYER_CSS = `
 .qz-suspense-titre{font-size:19px;font-weight:700;animation:qz-pulse 1.3s ease-in-out infinite}
 @keyframes qz-pulse{50%{opacity:.45}}
 
+.qz-discret{border-color:transparent;color:var(--doux)}
+.qz-scores{width:100%;max-width:560px;display:flex;flex-direction:column;gap:12px;background:var(--carte);border-radius:var(--rayon);padding:16px 18px}
+.qz-scores h2{font-size:20px}
+.qz-scores>.qz-discret{align-self:flex-start;padding-left:0}
+.qz-scores-form{display:flex;flex-direction:column;gap:10px}
+.qz-scores-ligne{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.qz-nom-saisie{font-family:ui-monospace,"Cascadia Mono",Consolas,monospace;font-size:30px;font-weight:700;letter-spacing:.35em;text-indent:.35em;text-transform:uppercase;width:4.6em;text-align:center;padding:6px 8px;border-radius:calc(var(--rayon) / 2);border:2px solid var(--accent);background:var(--fond);color:var(--texte)}
+.qz-nom-libre{font:inherit;font-size:20px;font-weight:700;width:min(100%,14em);padding:8px 12px;border-radius:calc(var(--rayon) / 2);border:2px solid var(--accent);background:var(--fond);color:var(--texte)}
+.qz-pseudo{font-size:24px;font-weight:700;color:var(--accent)}
+.qz-erreur{color:var(--ko);font-weight:600}
+.qz-scores-liste{list-style:none;padding:0;display:flex;flex-direction:column;gap:2px;font-variant-numeric:tabular-nums}
+.qz-scores-li{display:grid;grid-template-columns:2.4em minmax(0,1fr) auto;gap:10px;align-items:baseline;padding:6px 8px;border-radius:calc(var(--rayon) / 2)}
+.qz-rang{text-align:right;color:var(--doux)}
+.qz-nom{font-family:ui-monospace,"Cascadia Mono",Consolas,monospace;font-weight:700;letter-spacing:.12em;text-transform:uppercase;overflow-wrap:anywhere}
+.qz-pts{font-weight:700;color:var(--accent)}
+.qz-scores-li:nth-child(1) .qz-rang,.qz-scores-li:nth-child(1) .qz-nom{color:var(--accent)}
+.qz-score-moi{background:color-mix(in srgb,var(--accent) 20%,transparent);outline:2px solid var(--accent)}
+
 @container (max-width:780px){
   .qz-plateau{grid-template-columns:minmax(0,1fr)}
   .qz-echelle{display:none}
@@ -1937,6 +2170,7 @@ function editionExemple() {
     jeu: "quiz",
     champion: reglesChampion(),
     trouve: trouvesExemple(),
+    scores: { actif: false, mode: "initiales", taille: 10, motsInterdits: [] },
     questions: [
       Q("Quelle méthode de révision ancre le mieux un contenu dans la mémoire à long terme ?",
         ["Relire ses notes plusieurs fois", "Surligner les passages importants", "Se tester sans regarder ses notes", "Recopier le cours au propre"], 2,
@@ -2046,6 +2280,15 @@ function normaliserSons(s, base) {
   }
   return o;
 }
+function normaliserScores(s, base) {
+  const o = JSON.parse(JSON.stringify(base));
+  if (!s || typeof s !== "object") return o;
+  if (typeof s.actif === "boolean") o.actif = s.actif;
+  if (["initiales", "genere", "libre"].indexOf(s.mode) >= 0) o.mode = s.mode;
+  if ([5, 10, 20].indexOf(Number(s.taille)) >= 0) o.taille = Number(s.taille);
+  if (Array.isArray(s.motsInterdits)) o.motsInterdits = s.motsInterdits.map((x) => String(x).trim()).filter(Boolean).slice(0, 50);
+  return o;
+}
 function normaliserChampion(s, base) {
   const o = JSON.parse(JSON.stringify(base));
   if (!s || typeof s !== "object") return o;
@@ -2066,6 +2309,7 @@ function normaliser(c) {
     sons: normaliserSons(c.sons, base.sons),
     jeu: c.jeu === "champion" ? "champion" : "quiz",
     champion: normaliserChampion(c.champion, base.champion),
+    scores: normaliserScores(c.scores, base.scores),
     trouve: [],
     questions: []
   };
@@ -2142,7 +2386,7 @@ function construireExport(c) {
   if (c.sons && c.sons.actif === false) c.sons = { actif: false, pistes: {} };
   const champion = c.jeu === "champion";
   const json = JSON.stringify(c).replace(/</g, "\\u003c");
-  const code = (champion ? [fabriquerEl, appliquerTheme, creerMoteurSons, mountChampion] : [fabriquerEl, appliquerTheme, calculerEchelle, mountQuiz])
+  const code = (champion ? [fabriquerEl, appliquerTheme, creerMoteurSons, creerTableauScores, vueTableauScores, mountChampion] : [fabriquerEl, appliquerTheme, creerTableauScores, vueTableauScores, calculerEchelle, mountQuiz])
     .map((f) => f.toString()).join("\n");
   return [
     "<!DOCTYPE html>", '<html lang="fr">', "<head>", '<meta charset="utf-8">',
@@ -2171,7 +2415,7 @@ function monterApercu() {
   racineOmbre.appendChild(style); racineOmbre.appendChild(hote);
   partie = cfg.jeu === "champion"
     ? mountChampion(hote, configPropre(true), { depart: vueApercu, autoFocus: false, persistance: false })
-    : mountQuiz(hote, configPropre(true), { depart: vueApercu, autoFocus: false });
+    : mountQuiz(hote, configPropre(true), { depart: vueApercu, autoFocus: false, persistance: false });
 }
 function planifierApercu() { clearTimeout(minuteurApercu); minuteurApercu = setTimeout(monterApercu, 250); }
 const VUES_CHAMPION = [["accueil", "Écran d'accueil"], ["sprint", "Sprint"], ["serie", "La série"], ["trouve", "Trouve avant la fin"], ["fin", "Écran de fin"]];
@@ -2259,6 +2503,8 @@ function remplirFormulaire() {
   });
   document.querySelectorAll("[data-hex]").forEach((h) => { h.value = String(lire(cfg, h.dataset.hex) || "").toUpperCase(); });
   document.querySelectorAll("[data-manche]").forEach((c) => { c.checked = cfg.champion.manches.indexOf(c.dataset.manche) >= 0; });
+  const mots = document.querySelector("[data-scores-mots]");
+  if (mots) mots.value = (cfg.scores.motsInterdits || []).join(", ");
 }
 
 /* ---------- onglet Questions ---------- */
@@ -2614,6 +2860,13 @@ large.addEventListener("change", majOnglets);
 
 function surSaisie(e) {
   const t = e.target;
+  /* Dans un champ de texte, « input » a déjà tout traité : ignorer « change » évite de relancer l'aperçu (et d'effacer ce qu'on y saisit) quand on quitte le champ. */
+  if (e.type === "change" && !t.dataset.hex && (t.tagName === "TEXTAREA" || (t.tagName === "INPUT" && (t.type === "text" || t.type === "number")))) return;
+  if (t.dataset.scoresMots !== undefined) {
+    cfg.scores.motsInterdits = t.value.split(/[,;\n]/).map((x) => x.trim()).filter(Boolean).slice(0, 50);
+    apresModif();
+    return;
+  }
   if (t.dataset.manche) {
     cfg.champion.manches = ["sprint", "serie", "trouve"].filter((m) => { const c = document.querySelector('[data-manche="' + m + '"]'); return c && c.checked; });
     apresModif();
