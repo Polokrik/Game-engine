@@ -1,8 +1,8 @@
 name: Publier l'atelier sur GitHub Pages
 
-# Publie UNE page (l'atelier) : le reste du dépôt (docs, assistant, sources) n'est pas exposé.
-# Par défaut la page est publiée SANS sons (extraits d'émissions, non redistribuables au public).
-# Pour publier aussi les sons : Settings > Secrets and variables > Actions > Variables > PUBLIER_SONS = true
+# Publie UNE page (l'atelier) : le reste du dépôt (docs, assistant, sources) n'est pas servi par Pages.
+# Par défaut la page est publiée AVEC les sons (décision du porteur du projet, 2026-11-25).
+# Pour publier sans sons : Settings > Secrets and variables > Actions > Variables > PUBLIER_SONS = false
 
 on:
   push:
@@ -36,12 +36,16 @@ jobs:
         env:
           PUBLIER_SONS: ${{ vars.PUBLIER_SONS }}
         run: |
-          if [ "$PUBLIER_SONS" = "true" ]; then
-            python3 atelier/construire.py --sortie _site/index.html
-          else
+          if [ "$PUBLIER_SONS" = "false" ]; then
             python3 atelier/construire.py --sans-sons --sortie _site/index.html
             if grep -q "data:audio/mpeg;base64" _site/index.html; then
-              echo "Des sons se sont glissés dans la version publique : arrêt."
+              echo "Des sons se sont glissés dans la version sans sons : arrêt."
+              exit 1
+            fi
+          else
+            python3 atelier/construire.py --sortie _site/index.html
+            if ! grep -q "data:audio/mpeg;base64" _site/index.html; then
+              echo "Aucun son embarqué alors qu'ils devraient l'être : arrêt."
               exit 1
             fi
           fi

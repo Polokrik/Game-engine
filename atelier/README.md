@@ -33,7 +33,7 @@ Produit `atelier-jeux.html` (avec sons, à versionner) et `dist/atelier-artefact
 
 Après toute modification dans `src/`, `sons/` ou `atelier.src.html`, relancer la commande **et versionner le nouveau `atelier-jeux.html`**.
 
-La publication sur GitHub Pages (workflow `.github/workflows/pages.yml`) construit la page **sans sons** par défaut : voir le `README.md` à la racine.
+La publication sur GitHub Pages (workflow `.github/workflows/pages.yml`) construit la page **avec les sons** par défaut (variable `PUBLIER_SONS=false` pour les retirer) : voir le `README.md` à la racine.
 
 ## À savoir
 - Un jeu exporté recopie le code de son lecteur : il fonctionne sans l'atelier, mais ne se met pas à jour tout seul.

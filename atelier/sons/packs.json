@@ -1,5 +1,5 @@
 {
-  "_note": "Correspondance événement -> fichier audio. Les fichiers sont versionnés dans ce dépôt PRIVÉ pour un usage interne (extraits d'émissions de télévision). La publication publique (GitHub Pages) se fait sans sons par défaut.",
+  "_note": "Correspondance événement -> fichier audio. Fichiers versionnés dans ce dépôt, public depuis le 2026-11-25 (extraits d'émissions de télévision ; publication décidée par le porteur du projet).",
   "SONS_DEFAUT": {
     "lancement": "qui-veut-gagner-des-millions-stressant.mp3",
     "correct": "correct_millionaire.mp3",
