@@ -297,7 +297,7 @@ function vueTableauScores(el, tableau, opts) {
   } else blocs.push(el("p", { class: "qz-doux", text: "Aucun score pour l'instant : soyez le premier !" }));
 
   if (tableau.persistant && !tableau.stockOk()) {
-    blocs.push(el("p", { class: "qz-doux", text: "Les scores ne sont pas conservés dans ce contexte de lecture : ils disparaîtront à la fermeture." }));
+    blocs.push(el("p", { class: "qz-doux", text: "Les scores ne sont pas conservés ici : la page d'hébergement bloque le stockage du navigateur. Ils disparaîtront à l'actualisation." }));
   } else if (!tableau.persistant) {
     blocs.push(el("p", { class: "qz-doux", text: "Aperçu : les scores ne sont pas conservés." }));
   }

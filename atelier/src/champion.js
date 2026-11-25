@@ -227,7 +227,7 @@ function mountChampion(racine, config, options) {
       vueTableauScores(el, tableauScores, { compact: true, format: formatScore }),
       aJoue ? blocRecords() : null,
       aJoue ? blocMaitrise("Votre maîtrise par thème") : null,
-      !stockOk && options.persistance !== false ? el("p", { class: "qz-doux", text: "Vos records ne peuvent pas être conservés dans ce contexte de lecture." }) : null
+      !stockOk && options.persistance !== false ? el("p", { class: "qz-doux", text: "Vos records ne sont pas conservés ici : la page d'hébergement bloque le stockage du navigateur." }) : null
     ]));
   }
 

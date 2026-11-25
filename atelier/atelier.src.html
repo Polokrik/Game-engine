@@ -372,7 +372,7 @@ input.hex{font-family:ui-monospace,"Cascadia Mono",Consolas,monospace;font-size:
       <div class="panneau" id="p-scores" role="tabpanel" aria-labelledby="tab-scores" hidden>
         <div class="bloc">
           <h2>Tableau des scores</h2>
-          <label class="coche"><input type="checkbox" id="f-scores-actif" data-c="scores.actif"><span>Afficher un tableau des scores façon borne d'arcade (pour un jeu hébergé sur SharePoint)</span></label>
+          <label class="coche"><input type="checkbox" id="f-scores-actif" data-c="scores.actif"><span>Afficher un tableau des scores façon borne d'arcade</span></label>
           <div class="grille">
             <label class="champ"><span>Nom du joueur</span>
               <select id="f-scores-mode" data-c="scores.mode">
@@ -386,7 +386,7 @@ input.hex{font-family:ui-monospace,"Cascadia Mono",Consolas,monospace;font-size:
             </label>
           </div>
           <label class="champ"><span>Mots interdits en plus, séparés par des virgules</span><input type="text" id="f-scores-mots" data-scores-mots placeholder="Par exemple le nom d'un concurrent"></label>
-          <p class="aide">Option à activer pour un jeu hébergé sur SharePoint. Les scores restent dans le navigateur du joueur : ce poste, ce navigateur, sans partage entre les joueurs. Inutile pour un jeu intégré dans Rise ou un LMS (le stockage du navigateur peut y être bloqué). Un filtre de base refuse les insultes courantes ; le pseudo généré évite toute saisie libre.</p>
+          <p class="aide">Les scores restent dans le navigateur du joueur : ce poste, ce navigateur, sans partage entre les joueurs. Ils ne sont conservés que si l'hébergement autorise le stockage du navigateur. Constaté sur SharePoint : une page HTML envoyée y est affichée dans un cadre isolé qui le bloque, et les scores disparaissent à l'actualisation ; le jeu affiche alors un avertissement. Inutile dans Rise ou un LMS. Un filtre de base refuse les insultes courantes ; le pseudo généré évite toute saisie libre.</p>
         </div>
       </div>
     </section>

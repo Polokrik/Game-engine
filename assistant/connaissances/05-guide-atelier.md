@@ -43,7 +43,7 @@ Un tableau fourni par l'assistant se copie dans la feuille du modèle, en gardan
 
 ## [ATEL-5] Sons, tableau des scores, habillage
 - **Sons** : facultatifs. Le joueur est prévenu avant de commencer et choisit « avec » ou « sans » ; un bouton « Son » permet de couper à tout moment.
-- **Tableau des scores** (onglet Scores) : **option, désactivée par défaut, à activer pour un jeu hébergé sur SharePoint.** Réglages : mode de nom (3 initiales, pseudo généré, pseudo libre filtré), nombre de scores gardés (5, 10 ou 20), mots interdits en plus. Les scores restent dans le navigateur du joueur et ne sont pas partagés. Inutile dans Rise ou le LMS.
+- **Tableau des scores** (onglet Scores) : **option, désactivée par défaut.** Réglages : mode de nom (3 initiales, pseudo généré, pseudo libre filtré), nombre de scores gardés (5, 10 ou 20), mots interdits en plus. Les scores restent dans le navigateur du joueur et ne sont pas partagés. **Ils ne sont conservés que si l'hébergement autorise le stockage du navigateur** : sur SharePoint, une page HTML envoyée est affichée dans un cadre isolé qui le bloque (les scores disparaissent à l'actualisation) ; l'hébergement en dossier est `[à tester]`. Le jeu affiche un avertissement à l'accueil quand le stockage est bloqué. Inutile dans Rise ou le LMS.
 - **Polices** : les polices Office ne s'affichent que si elles sont installées sur le poste du joueur ; sinon le jeu utilise une police proche.
 
 ## [ATEL-6] Exporter et publier
@@ -57,6 +57,6 @@ Un tableau fourni par l'assistant se copie dans la feuille du modèle, en gardan
 - **Des lignes sont ignorées à l'import** : lire la raison dans le bilan (bonne réponse illisible, énoncé manquant, moins de deux réponses…), corriger dans le fichier, ré-importer.
 - **Le jeu exporté n'est plus modifiable** : normal, c'est une copie figée. Reprendre le fichier d'édition `.json`. Sans ce fichier, il faut ressaisir le contenu.
 - **Les sons ne partent pas tout seuls** : normal, le navigateur exige un clic ; le jeu propose « Commencer avec le son ».
-- **Les records ou le tableau des scores ont disparu** : ils sont gardés dans le navigateur du joueur ; ils disparaissent si le joueur vide son navigateur ou change de poste.
+- **Les records ou le tableau des scores ont disparu** : ils sont gardés dans le navigateur du joueur. Causes : l'hébergement bloque le stockage (le jeu affiche alors « Les scores ne sont pas conservés ici »), ou le joueur a vidé son navigateur ou changé de poste. Si l'avertissement est affiché, essayer un autre mode d'hébergement ou renoncer au tableau des scores.
 - **L'aperçu est vide** : ouvrir le bon fichier de l'Atelier ; `[à compléter : procédure de dépannage]`.
 - **Qui est responsable ?** L'auteur du jeu : contenu, info clé, mise à jour.
