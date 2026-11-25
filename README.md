@@ -18,7 +18,7 @@ Après une modification du code ou des sons : `python3 atelier/construire.py` (v
 
 Le workflow `.github/workflows/pages.yml` publie **uniquement la page de l'atelier**, à chaque modification de `atelier/` sur `main`. Le reste du dépôt (docs, assistant, sources) n'est pas exposé.
 
-État : Pages est activé (**Settings > Pages > Source : GitHub Actions**). La première publication part dès que la branche de travail est **fusionnée dans `main`**. L'adresse sera de la forme `https://polokrik.github.io/Game-engine/`.
+**En ligne : <https://polokrik.github.io/Game-engine/>** (source : GitHub Actions). Chaque modification de `atelier/` sur `main` republie la page.
 
 > **La page est publique, et le dépôt aussi** : les fichiers du dépôt, y compris les sons, sont téléchargeables par tout le monde.
 >

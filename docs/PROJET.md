@@ -152,7 +152,7 @@ Les premiers retours des testeurs sont positifs. La version 0.2 répond aux crit
 | **Rise** | **Fonctionne (hébergement)** | Rise héberge les sorties HTML des jeux et permet de construire un module complet autour. Export SCORM vers le LMS. Le suivi est tenu par le module |
 | **LMS** | Via Rise | Le SCORM de Rise se met à jour depuis Rise, y compris quand il est déjà hébergé dans le LMS |
 | Posit Connect (GCP) | Dernier recours | Publication d'un HTML statique possible ; contrôle d'accès à régler dans le tableau de bord |
-| **GitHub Pages** | Activé ; en attente de fusion dans `main` | Publie l'**éditeur seul**, sur une adresse **publique**, avec les sons. Pratique pour partager l'outil ; les jeux d'entreprise restent sur SharePoint ou dans Rise |
+| **GitHub Pages** | **En ligne** : <https://polokrik.github.io/Game-engine/> | Publie l'**éditeur seul**, sur une adresse **publique**, avec les sons. Pratique pour partager l'outil ; les jeux d'entreprise restent sur SharePoint ou dans Rise |
 
 **À tester avant de généraliser** (dans Rise, puis dans le LMS) :
 - les records et le futur tableau des scores, qui reposent sur le stockage du navigateur : un jeu intégré dans une fenêtre imbriquée peut le voir bloqué ou vidé ;
@@ -180,7 +180,7 @@ Le SCORM propre au jeu n'est plus une priorité : Rise assure le suivi du module
 - [x] Installer le projet dans ce dépôt (atelier, sources, build, recherche).
 - [ ] Mettre en place l'intégration continue (build, tests de navigateur).
 - [x] Activer GitHub Pages (source : GitHub Actions).
-- [ ] Fusionner la branche dans `main` pour lancer la première publication, puis tester l'adresse publique.
+- [x] Fusionner la branche dans `main` ; adresse publique testée (page, sons, Champion solo, import Excel).
 - [ ] Relire le contenu du dépôt, devenu public : `docs/PROJET.md` décrit le contexte interne (outils IA, Rise, SharePoint) et `assistant/` le prompt de l'assistant.
 - [ ] Nettoyer les scripts de test (`atelier/tests/e2e-brouillons/`).
 
@@ -287,6 +287,7 @@ Rapport complet : [`recherche/deep-research-serious-games-b2b.md`](recherche/dee
 | 2026-11-19 | **Produit interne, usage interne uniquement.** Outils IA des clients : Copilot, outil maison, GCP en exception. SharePoint et Rise hébergent les jeux ; suivi tenu par Rise ; SCORM via Rise. Kahoot écarté. L'assistant propose toujours 2 ou 3 formats avec avantages et limites. Les auteurs sont responsables de leurs jeux exportés. Chrono activable ou désactivable. L'accessibilité vient plus tard. Garder un côté fun. Tableau des scores façon arcade à cadrer |
 | 2026-11-25 | Sons par défaut remis dans le build et versionnés dans le dépôt privé (usage interne). Publication sur GitHub Pages préparée : outil seul, public, **sans sons par défaut** ; les sons peuvent être publiés avec la variable `PUBLIER_SONS=true` |
 | 2026-11-25 (suite) | Le dépôt est passé en **public** et GitHub Pages est activé. Décision du porteur : **les sons sont publiés** sur la page (par défaut, `PUBLIER_SONS=false` pour les retirer) |
+| 2026-11-25 (fin) | **La page est en ligne** sur GitHub Pages, avec les sons : <https://polokrik.github.io/Game-engine/> |
 | 2026-11-25 (soir) | **Tableau des scores local** construit (option A) : initiales, pseudo généré ou libre filtré ; scores gardés dans le navigateur du joueur. Correction d'un défaut de l'éditeur : quitter un champ de texte relançait l'aperçu |
 | 2026-11-26 | Le tableau des scores devient une **option désactivée par défaut**, réservée aux jeux hébergés sur SharePoint ; pas de besoin pour Rise ou le LMS |
 | 2026-11-26 (assistant) | **Assistant IA, version 0.2** : prompt plus précis avec procédure pour explorer les fichiers, base de connaissances restructurée en 8 fichiers et 51 sections, exemples, guide de l'Atelier, liste de ce qui manque. Constat : les fichiers Markdown ne sont pas acceptés comme connaissance par Copilot Studio, d'où une conversion en Word |
