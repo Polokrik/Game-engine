@@ -156,6 +156,7 @@ input.hex{font-family:ui-monospace,"Cascadia Mono",Consolas,monospace;font-size:
         <button type="button" role="tab" id="tab-questions" data-onglet="questions">Questions <span class="compte" id="compte-questions"></span></button>
         <button type="button" role="tab" id="tab-regles" data-onglet="regles">Règles et gains</button>
         <button type="button" role="tab" id="tab-sons" data-onglet="sons">Sons</button>
+        <button type="button" role="tab" id="tab-scores" data-onglet="scores">Scores</button>
         <button type="button" role="tab" id="tab-apercu" data-onglet="apercu">Aperçu</button>
       </div>
 
@@ -346,24 +347,6 @@ input.hex{font-family:ui-monospace,"Cascadia Mono",Consolas,monospace;font-size:
           <h2>Apprendre de ses erreurs</h2>
           <label class="coche"><input type="checkbox" id="f-reposer" data-c="champion.reposerErreurs"><span>Reposer plus tard une question ratée, pour retenter la même question</span></label>
         </div>
-        <div class="bloc">
-          <h2>Tableau des scores</h2>
-          <label class="coche"><input type="checkbox" id="f-scores-actif" data-c="scores.actif"><span>Afficher un tableau des scores façon borne d'arcade (pour un jeu hébergé sur SharePoint)</span></label>
-          <div class="grille">
-            <label class="champ"><span>Nom du joueur</span>
-              <select id="f-scores-mode" data-c="scores.mode">
-                <option value="initiales">3 initiales (style arcade)</option>
-                <option value="genere">Pseudo généré, sans saisie (le plus sûr)</option>
-                <option value="libre">Pseudo libre, filtré</option>
-              </select>
-            </label>
-            <label class="champ"><span>Scores gardés</span>
-              <select id="f-scores-taille" data-c="scores.taille" data-num="1"><option value="5">5</option><option value="10">10</option><option value="20">20</option></select>
-            </label>
-          </div>
-          <label class="champ"><span>Mots interdits en plus, séparés par des virgules</span><input type="text" id="f-scores-mots" data-scores-mots placeholder="Par exemple le nom d'un concurrent"></label>
-          <p class="aide">Option à activer pour un jeu hébergé sur SharePoint. Les scores restent dans le navigateur du joueur : ce poste, ce navigateur, sans partage entre les joueurs. Inutile pour un jeu intégré dans Rise ou un LMS (le stockage du navigateur peut y être bloqué). Un filtre de base refuse les insultes courantes ; le pseudo généré évite toute saisie libre.</p>
-        </div>
       </div>
       <!-- SONS -->
       <div class="panneau" id="p-sons" role="tabpanel" aria-labelledby="tab-sons" hidden>
@@ -392,6 +375,27 @@ input.hex{font-family:ui-monospace,"Cascadia Mono",Consolas,monospace;font-size:
         <div class="avis">Droits d'utilisation : les extraits d'émissions de télévision sont protégés. Ils conviennent pour un prototype interne. Avant une diffusion plus large (LMS, plateforme Rose, clients), faites valider leur usage ou remplacez-les par des sons libres de droits : chaque emplacement accepte n'importe quel fichier.</div>
         <p class="aide" id="sons-poids"></p>
         <input type="file" class="cache" id="fichier-son" accept="audio/*,.mp3,.ogg,.wav,.m4a">
+      </div>
+      <!-- SCORES -->
+      <div class="panneau" id="p-scores" role="tabpanel" aria-labelledby="tab-scores" hidden>
+        <div class="bloc">
+          <h2>Tableau des scores</h2>
+          <label class="coche"><input type="checkbox" id="f-scores-actif" data-c="scores.actif"><span>Afficher un tableau des scores façon borne d'arcade (pour un jeu hébergé sur SharePoint)</span></label>
+          <div class="grille">
+            <label class="champ"><span>Nom du joueur</span>
+              <select id="f-scores-mode" data-c="scores.mode">
+                <option value="initiales">3 initiales (style arcade)</option>
+                <option value="genere">Pseudo généré, sans saisie (le plus sûr)</option>
+                <option value="libre">Pseudo libre, filtré</option>
+              </select>
+            </label>
+            <label class="champ"><span>Scores gardés</span>
+              <select id="f-scores-taille" data-c="scores.taille" data-num="1"><option value="5">5</option><option value="10">10</option><option value="20">20</option></select>
+            </label>
+          </div>
+          <label class="champ"><span>Mots interdits en plus, séparés par des virgules</span><input type="text" id="f-scores-mots" data-scores-mots placeholder="Par exemple le nom d'un concurrent"></label>
+          <p class="aide">Option à activer pour un jeu hébergé sur SharePoint. Les scores restent dans le navigateur du joueur : ce poste, ce navigateur, sans partage entre les joueurs. Inutile pour un jeu intégré dans Rise ou un LMS (le stockage du navigateur peut y être bloqué). Un filtre de base refuse les insultes courantes ; le pseudo généré évite toute saisie libre.</p>
+        </div>
       </div>
     </section>
 
@@ -655,7 +659,6 @@ function vueTableauScores(el, tableau, opts) {
   var format = opts.format || function (s) { return String(s); };
   var liste = tableau.lire();
   var compact = !!opts.compact;
-  if (compact && !liste.length) return null;
   var enjeu = opts.score != null && !etat.fait;
   var blocs = [el("h2", { text: compact ? "Meilleurs scores" : "Tableau des scores" })];
 
@@ -2482,6 +2485,7 @@ function majDerives() {
   $("champ-logoh").hidden = !t.logo;
   $("logoh-val").textContent = "(" + (Number(t.logoHauteur) || 64) + " px)";
   $("champ-police-perso").hidden = t.police !== "perso";
+  $("tab-scores").textContent = "Scores" + (cfg.scores.actif ? " (activés)" : "");
   $("vol-val").textContent = "(" + (Number(cfg.sons.volume) || 0) + " %)";
   const poidsSons = slotsDuJeu().reduce((s, { cle }) => s + (cfg.sons.pistes[cle] ? cfg.sons.pistes[cle].src.length * 0.75 : 0), 0);
   $("sons-poids").textContent = poidsSons ? "Poids des sons dans le jeu exporté : " + (poidsSons / 1048576).toFixed(1).replace(".", ",") + " Mo." : "Aucun son dans ce jeu.";
@@ -2844,7 +2848,7 @@ const large = window.matchMedia("(min-width:1080px)");
 function majOnglets() {
   const estLarge = large.matches;
   if (estLarge && ongletActif === "apercu") ongletActif = "identite";
-  ["identite", "questions", "regles", "sons"].forEach((o) => { $("p-" + o).hidden = ongletActif !== o; });
+  ["identite", "questions", "regles", "sons", "scores"].forEach((o) => { $("p-" + o).hidden = ongletActif !== o; });
   $("p-apercu").hidden = !estLarge && ongletActif !== "apercu";
   $("tab-apercu").hidden = estLarge;
   document.querySelectorAll(".onglets button").forEach((b) => b.setAttribute("aria-selected", b.dataset.onglet === ongletActif ? "true" : "false"));
@@ -3138,7 +3142,9 @@ $("btn-exporter").addEventListener("click", () => {
   const propre = configPropre(true), exclues = cfg.questions.length - propre.questions.length;
   if (!propre.questions.length) { toast("Aucune question complète à exporter. Complétez au moins une question."); return; }
   enregistrerFichier(slug(cfg.meta.titre) + ".html", construireExport(propre), "text/html").then((ok) => {
-    if (ok && exclues) toast("Jeu exporté. " + exclues + (exclues > 1 ? " questions incomplètes ont été laissées de côté." : " question incomplète a été laissée de côté."));
+    if (!ok) return;
+    toast("Jeu exporté. Tableau des scores : " + (propre.scores && propre.scores.actif ? "activé." : "désactivé (à activer dans l'onglet Scores).")
+      + (exclues ? " " + exclues + (exclues > 1 ? " questions incomplètes ont été laissées de côté." : " question incomplète a été laissée de côté.") : ""));
   });
 });
 $("btn-nouveau").addEventListener("click", (e) => {

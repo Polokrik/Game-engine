@@ -10,7 +10,7 @@ Un outil interne qui crée des jeux de connaissances en HTML. L'auteur saisit ou
 2. **Identité visuelle** (premier onglet) : titre, phrase d'accroche, message de fin ; couleurs (palettes prêtes ou codes hexadécimaux, et palettes de marque enregistrables) ; police ; logo (2 Mo au maximum).
 3. **Questions** (deuxième onglet) : saisir les questions une par une, ou importer un fichier Excel ([ATEL-3]).
 4. **Règles** (troisième onglet) : les règles du jeu choisi ([ATEL-4]).
-5. **Sons** (quatrième onglet) : activer ou non les sons, régler le volume, remplacer un son par un autre fichier.
+5. **Sons** (quatrième onglet) : activer ou non les sons, régler le volume, remplacer un son par un autre fichier. **Scores** (cinquième onglet) : activer le tableau des scores si le jeu est hébergé sur SharePoint ([ATEL-5]).
 6. **Aperçu** : à droite de l'écran ; c'est le vrai jeu, on peut y jouer. Le menu « Afficher » saute à un écran précis.
 7. **Enregistrer l'édition** : télécharge un fichier `.json` qui permet de **reprendre le travail** plus tard. **À conserver : le fichier HTML exporté ne se modifie pas dans l'Atelier.**
 8. **Exporter le jeu (.html)** : télécharge le jeu autonome, prêt à publier ([ATEL-6]).
@@ -43,7 +43,7 @@ Un tableau fourni par l'assistant se copie dans la feuille du modèle, en gardan
 
 ## [ATEL-5] Sons, tableau des scores, habillage
 - **Sons** : facultatifs. Le joueur est prévenu avant de commencer et choisit « avec » ou « sans » ; un bouton « Son » permet de couper à tout moment.
-- **Tableau des scores** (onglet Règles) : **option, désactivée par défaut, à activer pour un jeu hébergé sur SharePoint.** Réglages : mode de nom (3 initiales, pseudo généré, pseudo libre filtré), nombre de scores gardés (5, 10 ou 20), mots interdits en plus. Les scores restent dans le navigateur du joueur et ne sont pas partagés. Inutile dans Rise ou le LMS.
+- **Tableau des scores** (onglet Scores) : **option, désactivée par défaut, à activer pour un jeu hébergé sur SharePoint.** Réglages : mode de nom (3 initiales, pseudo généré, pseudo libre filtré), nombre de scores gardés (5, 10 ou 20), mots interdits en plus. Les scores restent dans le navigateur du joueur et ne sont pas partagés. Inutile dans Rise ou le LMS.
 - **Polices** : les polices Office ne s'affichent que si elles sont installées sur le poste du joueur ; sinon le jeu utilise une police proche.
 
 ## [ATEL-6] Exporter et publier

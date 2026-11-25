@@ -12,7 +12,7 @@ const PAGE = 'file:///home/user/game-engine/atelier/atelier-jeux.html';
   const liste = async () => sc.locator('.qz-scores-li').allTextContents();
 
   // ---- A. quiz, 3 initiales (l'option est désactivée par défaut : on l'active)
-  await p.click('#tab-regles'); console.log('A0. désactivée par défaut :', !(await p.isChecked('#f-scores-actif'))); await p.check('#f-scores-actif'); await p.waitForTimeout(400);
+  await p.click('#tab-scores'); console.log('A0. désactivée par défaut :', !(await p.isChecked('#f-scores-actif'))); await p.check('#f-scores-actif'); await p.waitForTimeout(400);
   await p.selectOption('#f-vue','fin'); await p.waitForTimeout(600);
   console.log('A. formulaire présent:', await sc.locator('.qz-nom-saisie').count(), '| consigne:', (await txt('.qz-scores-form label')).slice(0,70));
   await sc.locator('.qz-nom-saisie').fill('con'); await sc.locator('text=Enregistrer mon score').click();
@@ -25,7 +25,7 @@ const PAGE = 'file:///home/user/game-engine/atelier/atelier-jeux.html';
   await p.screenshot({path:'a_scores.png'});
 
   // ---- B. pseudo généré
-  await p.click('#tab-regles'); await p.selectOption('#f-scores-mode','genere'); await p.waitForTimeout(500);
+  await p.click('#tab-scores'); await p.selectOption('#f-scores-mode','genere'); await p.waitForTimeout(500);
   await p.selectOption('#f-vue','fin'); await p.waitForTimeout(600);
   const ps = [await txt('.qz-pseudo')];
   for (let i = 0; i < 6 && new Set(ps).size < 2; i++) { await sc.locator('text=Un autre pseudo').click(); ps.push(await txt('.qz-pseudo')); }
@@ -77,7 +77,7 @@ const PAGE = 'file:///home/user/game-engine/atelier/atelier-jeux.html';
   console.log('G. export champion Ko:', Math.round(await exporter('champion','exp_champion.html')/1024));
   const q = await ctx.newPage(); q.on('pageerror',e=>errs.push('EXPORT '+e.message));
   await q.goto('file://'+process.cwd()+'/exp_champion.html'); await q.waitForTimeout(300);
-  console.log('G. accueil sans score -> section:', await q.locator('.qz-scores').count());
+  console.log('G. accueil, tableau activé mais vide -> section (invitation « soyez le premier »):', await q.locator('.qz-scores').count());
   await jouerChampion(q); await q.waitForTimeout(200);
   await q.locator('.qz-nom-saisie').fill('RIK'); await q.locator('text=Enregistrer mon score').click(); await q.waitForTimeout(200);
   console.log('G. fin :', (await q.locator('.qz-scores-li').allTextContents()), '| en évidence:', await q.locator('.qz-score-moi').count());

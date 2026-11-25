@@ -231,7 +231,6 @@ function vueTableauScores(el, tableau, opts) {
   var format = opts.format || function (s) { return String(s); };
   var liste = tableau.lire();
   var compact = !!opts.compact;
-  if (compact && !liste.length) return null;
   var enjeu = opts.score != null && !etat.fait;
   var blocs = [el("h2", { text: compact ? "Meilleurs scores" : "Tableau des scores" })];
 
