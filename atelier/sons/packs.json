@@ -1,0 +1,17 @@
+{
+  "_note": "Correspondance événement -> fichier audio. Fichiers versionnés dans ce dépôt, public depuis le 2026-11-25 (extraits d'émissions de télévision ; publication décidée par le porteur du projet).",
+  "SONS_DEFAUT": {
+    "lancement": "qui-veut-gagner-des-millions-stressant.mp3",
+    "correct": "correct_millionaire.mp3",
+    "faux": "wrong_millionaire.mp3",
+    "suspens": "suspens_verdict_final_millionaire.mp3",
+    "jackpot": "jackpot_millionaire.mp3"
+  },
+  "SONS_QPUC": {
+    "qp_generique": "qpuc-generique-debut.mp3",
+    "qp_buzzer": "qpuc-buzzer.mp3",
+    "qp_correct": "qpuc-bonne-reponse.mp3",
+    "qp_faux": "qpuc-mauvaise-reponse.mp3",
+    "qp_timer": "qpuc-timer.mp3"
+  }
+}
