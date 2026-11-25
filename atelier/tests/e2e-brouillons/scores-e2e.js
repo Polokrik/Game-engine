@@ -11,7 +11,8 @@ const PAGE = 'file:///home/user/game-engine/atelier/atelier-jeux.html';
   const txt = async (s) => ((await sc.locator(s).first().textContent()) || '').trim();
   const liste = async () => sc.locator('.qz-scores-li').allTextContents();
 
-  // ---- A. quiz, 3 initiales
+  // ---- A. quiz, 3 initiales (l'option est désactivée par défaut : on l'active)
+  await p.click('#tab-regles'); console.log('A0. désactivée par défaut :', !(await p.isChecked('#f-scores-actif'))); await p.check('#f-scores-actif'); await p.waitForTimeout(400);
   await p.selectOption('#f-vue','fin'); await p.waitForTimeout(600);
   console.log('A. formulaire présent:', await sc.locator('.qz-nom-saisie').count(), '| consigne:', (await txt('.qz-scores-form label')).slice(0,70));
   await sc.locator('.qz-nom-saisie').fill('con'); await sc.locator('text=Enregistrer mon score').click();
@@ -58,7 +59,7 @@ const PAGE = 'file:///home/user/game-engine/atelier/atelier-jeux.html';
 
   // ---- G. exports : conservation après rechargement
   async function exporter(jeu, nom) {
-    await p.evaluate((jeu)=>{ cfg = editionExemple(); cfg.jeu = jeu; if (jeu==='champion') { cfg.champion.manches=['sprint']; cfg.champion.sprint.objectif=3; } cfg.scores.taille = 5; toutRafraichir(); }, jeu);
+    await p.evaluate((jeu)=>{ cfg = editionExemple(); cfg.jeu = jeu; if (jeu==='champion') { cfg.champion.manches=['sprint']; cfg.champion.sprint.objectif=3; } cfg.scores.actif = true; cfg.scores.taille = 5; toutRafraichir(); }, jeu);
     const html = await p.evaluate(()=>construireExport(configPropre(true))); fs.writeFileSync(nom, html); return html.length;
   }
   async function jouerChampion(q) {

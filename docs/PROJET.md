@@ -193,8 +193,8 @@ Le SCORM propre au jeu n'est plus une priorité : Rise assure le suivi du module
 
 **Atelier et jeux**
 - [x] Tableau des scores local (option A de la section 11).
-- [ ] Tester le tableau des scores dans Rise puis dans le LMS (stockage du navigateur).
-- [ ] Décider si un classement commun (option B, liste SharePoint) est utile.
+- [ ] Tester le tableau des scores sur un jeu hébergé sur SharePoint.
+- [ ] Classement commun (option B, liste SharePoint) : à construire seulement si une équipe le demande.
 - [ ] Animations et micro-effets (le côté fun).
 - [ ] Contrôles de qualité pour les auteurs : info clé manquante, thème de moins de 8 questions, réponses trop longues ou trop proches, etc.
 - [ ] Numéro de version du moteur dans chaque export.
@@ -226,7 +226,7 @@ Le SCORM propre au jeu n'est plus une priorité : Rise assure le suivi du module
 
 ## 11. Le tableau des scores façon arcade
 
-**État (2026-11-25) : l'option A est construite** (classement local, dans les deux jeux et dans les HTML exportés). L'auteur choisit dans l'onglet Règles : activer ou non, le mode de nom (3 initiales, pseudo généré, pseudo libre filtré), le nombre de scores gardés et des mots interdits en plus. Le filtre est un filtre de base : il refuse les insultes courantes même écrites avec des chiffres ou des points, mais ne remplace pas une modération. Les options B et C restent à décider.
+**État (2026-11-25) : l'option A est construite, désactivée par défaut, et destinée aux jeux hébergés sur SharePoint** (inutile dans Rise ou un LMS) (classement local, dans les deux jeux et dans les HTML exportés). L'auteur choisit dans l'onglet Règles : activer ou non, le mode de nom (3 initiales, pseudo généré, pseudo libre filtré), le nombre de scores gardés et des mots interdits en plus. Le filtre est un filtre de base : il refuse les insultes courantes même écrites avec des chiffres ou des points, mais ne remplace pas une modération. Les options B et C restent à décider.
 
 L'idée : le joueur inscrit son nom à la fin de la partie, comme sur une borne d'arcade. Elle sert le côté fun. Les travaux sur la gamification suggèrent que classements et points ajoutés en surface ne suffisent pas à motiver sur la durée (source 7 de `recherche/sources.md`, obtenue sur des élèves en mathématiques) : c'est une **couche de plaisir**, à relier à la progression personnelle (« votre meilleur score »).
 
@@ -284,3 +284,4 @@ Rapport complet : [`recherche/deep-research-serious-games-b2b.md`](recherche/dee
 | 2026-11-25 | Sons par défaut remis dans le build et versionnés dans le dépôt privé (usage interne). Publication sur GitHub Pages préparée : outil seul, public, **sans sons par défaut** ; les sons peuvent être publiés avec la variable `PUBLIER_SONS=true` |
 | 2026-11-25 (suite) | Le dépôt est passé en **public** et GitHub Pages est activé. Décision du porteur : **les sons sont publiés** sur la page (par défaut, `PUBLIER_SONS=false` pour les retirer) |
 | 2026-11-25 (soir) | **Tableau des scores local** construit (option A) : initiales, pseudo généré ou libre filtré ; scores gardés dans le navigateur du joueur. Correction d'un défaut de l'éditeur : quitter un champ de texte relançait l'aperçu |
+| 2026-11-26 | Le tableau des scores devient une **option désactivée par défaut**, réservée aux jeux hébergés sur SharePoint ; pas de besoin pour Rise ou le LMS |

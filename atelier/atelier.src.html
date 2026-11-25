@@ -340,7 +340,7 @@ input.hex{font-family:ui-monospace,"Cascadia Mono",Consolas,monospace;font-size:
         </div>
         <div class="bloc">
           <h2>Tableau des scores</h2>
-          <label class="coche"><input type="checkbox" id="f-scores-actif" data-c="scores.actif"><span>Afficher un tableau des scores, comme sur une borne d'arcade</span></label>
+          <label class="coche"><input type="checkbox" id="f-scores-actif" data-c="scores.actif"><span>Afficher un tableau des scores façon borne d'arcade (pour un jeu hébergé sur SharePoint)</span></label>
           <div class="grille">
             <label class="champ"><span>Nom du joueur</span>
               <select id="f-scores-mode" data-c="scores.mode">
@@ -354,7 +354,7 @@ input.hex{font-family:ui-monospace,"Cascadia Mono",Consolas,monospace;font-size:
             </label>
           </div>
           <label class="champ"><span>Mots interdits en plus, séparés par des virgules</span><input type="text" id="f-scores-mots" data-scores-mots placeholder="Par exemple le nom d'un concurrent"></label>
-          <p class="aide">Les scores restent dans le navigateur du joueur : ce poste, ce navigateur. Ils ne sont pas partagés entre les joueurs et peuvent ne pas être conservés dans certaines fenêtres intégrées (Rise, LMS). Un filtre de base refuse les insultes courantes ; le pseudo généré évite toute saisie libre.</p>
+          <p class="aide">Option à activer pour un jeu hébergé sur SharePoint. Les scores restent dans le navigateur du joueur : ce poste, ce navigateur, sans partage entre les joueurs. Inutile pour un jeu intégré dans Rise ou un LMS (le stockage du navigateur peut y être bloqué). Un filtre de base refuse les insultes courantes ; le pseudo généré évite toute saisie libre.</p>
         </div>
       </div>
       <!-- SONS -->
@@ -1152,7 +1152,7 @@ function editionExemple() {
     jeu: "quiz",
     champion: reglesChampion(),
     trouve: trouvesExemple(),
-    scores: { actif: true, mode: "initiales", taille: 10, motsInterdits: [] },
+    scores: { actif: false, mode: "initiales", taille: 10, motsInterdits: [] },
     questions: [
       Q("Quelle méthode de révision ancre le mieux un contenu dans la mémoire à long terme ?",
         ["Relire ses notes plusieurs fois", "Surligner les passages importants", "Se tester sans regarder ses notes", "Recopier le cours au propre"], 2,

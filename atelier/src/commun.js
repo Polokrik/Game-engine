@@ -134,7 +134,7 @@ function creerMoteurSons(pistes, volumePct) {
    cle : clé de stockage ; persistant : false pour ne rien écrire dans le navigateur (aperçu de l'éditeur). */
 function creerTableauScores(config, cle, persistant) {
   config = config || {};
-  var actif = config.actif !== false;
+  var actif = config.actif === true; /* désactivé tant que l'auteur ne l'a pas demandé */
   var mode = config.mode === "libre" || config.mode === "genere" ? config.mode : "initiales";
   var taille = Math.max(3, Math.min(50, Math.round(Number(config.taille)) || 10));
   var stockOk = true, liste = [];
