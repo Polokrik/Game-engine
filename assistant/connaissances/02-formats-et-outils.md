@@ -33,7 +33,7 @@ Version 0.2 · 2026-11-26 · **À consulter pour savoir ce que les outils font o
 - Contenu à fournir : questions avec thème et niveau (1 à 3) ; concepts avec 4 indices, la réponse, 2 à 3 fausses propositions, une info clé.
 
 **Points communs aux deux jeux**
-- Sons facultatifs : le joueur est prévenu et choisit de jouer avec ou sans ; un bouton permet de les couper.
+- Sons facultatifs : le joueur est prévenu et choisit de jouer avec ou sans ; un bouton permet de les couper. Musique d'ambiance en option, avec son propre bouton de coupure, qui s'efface pendant les effets.
 - Chrono facultatif.
 - **Tableau des scores façon arcade : une option**, désactivée par défaut. Le joueur entre 3 initiales ou un pseudo généré, selon le réglage ; un filtre refuse les insultes courantes. Les scores restent dans le navigateur du joueur : ils ne sont pas partagés entre les joueurs. **Ils ne sont conservés que si l'hébergement autorise le stockage du navigateur.** Constaté : sur SharePoint (page HTML ou dossier), la page est affichée dans un cadre isolé qui bloque ce stockage, et les scores ne durent alors que le temps de la visite. Même limite pour les records et la maîtrise par thème du Champion solo. Inutile dans Rise ou le LMS.
 

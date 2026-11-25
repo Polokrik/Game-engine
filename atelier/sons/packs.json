@@ -13,5 +13,8 @@
     "qp_correct": "qpuc-bonne-reponse.mp3",
     "qp_faux": "qpuc-mauvaise-reponse.mp3",
     "qp_timer": "qpuc-timer.mp3"
+  },
+  "SONS_AMBIANCE": {
+    "ambiance": "ambiance-douce.mp3"
   }
 }

@@ -363,8 +363,23 @@ input.hex{font-family:ui-monospace,"Cascadia Mono",Consolas,monospace;font-size:
               </select>
             </label>
           </div>
+          <h3>Musique d'ambiance</h3>
+          <p class="aide">Une piste facultative, jouée en boucle à faible volume. Le joueur la coupe avec le bouton « Musique », indépendamment des effets. Pendant un effet (bonne réponse, suspense…), la musique s'efface en douceur puis revient. Ajoutez le fichier dans l'emplacement « Musique d'ambiance » ci-dessous.</p>
+          <div class="grille">
+            <label class="champ"><span>Volume de la musique <output id="vol-amb-val"></output></span><input type="range" id="f-vol-amb" data-c="sons.ambiance.volume" data-num="1" min="0" max="100" step="5"></label>
+            <label class="champ"><span>Pendant un effet sonore</span>
+              <select id="f-baisse-amb" data-c="sons.ambiance.baisse" data-num="1">
+                <option value="0">Musique coupée</option>
+                <option value="15">Presque coupée</option>
+                <option value="30">Atténuée (recommandé)</option>
+                <option value="60">Légèrement atténuée</option>
+                <option value="100">Pas d'atténuation</option>
+              </select>
+            </label>
+          </div>
           <div class="rangee">
             <button type="button" id="btn-pack">Charger le pack du prototype</button>
+            <button type="button" id="btn-ambiance">Ajouter la musique d'exemple (libre de droits)</button>
             <button type="button" class="discret" id="btn-sons-vider">Retirer tous les sons</button>
           </div>
         </div>
@@ -419,6 +434,7 @@ input.hex{font-family:ui-monospace,"Cascadia Mono",Consolas,monospace;font-size:
 /*SONS_DEBUT*/
 var SONS_DEFAUT = {};
 var SONS_QPUC = {};
+var SONS_AMBIANCE = {};
 /*SONS_FIN*/
 </script>
 <script>
@@ -510,7 +526,9 @@ function mountQuiz(racine, config, options) {
   /* ---------- sons : facultatifs, le joueur choisit avec ou sans et peut couper à tout moment ---------- */
   var sons = config.sons || {}, pistes = sons.pistes || {};
   var CLES_SONS = ["lancement", "correct", "faux", "suspens", "jackpot"];
-  var aSons = sons.actif !== false && CLES_SONS.some(function (k) { return pistes[k] && pistes[k].src; });
+  var ambiance = creerAmbiance(pistes.ambiance, sons.ambiance);
+  var aMusique = sons.actif !== false && ambiance.disponible;
+  var aSons = sons.actif !== false && (CLES_SONS.some(function (k) { return pistes[k] && pistes[k].src; }) || ambiance.disponible);
   var volumeSon = Math.max(0, Math.min(1, (sons.volume != null ? Number(sons.volume) : 70) / 100));
   var suspenseMax = Number(sons.suspenseMax) || 0;
   var sonActif = false, audios = {}, minuteurSuspense = null, fondu = null, fonduSortie = null, sonCourant = null;
@@ -531,6 +549,7 @@ function mountQuiz(racine, config, options) {
       if (!a) return;
       try { a.onended = null; a.pause(); a.currentTime = 0; a.volume = volumeSon; } catch (e) {}
     });
+    ambiance.relever();
   }
   function jouer(cle, auFin) {
     var a = sonActif ? audios[cle] : null;
@@ -538,9 +557,10 @@ function mountQuiz(racine, config, options) {
     if (!a) { if (auFin) auFin(); return; }
     sonCourant = cle;
     var fini = false;
-    function terminer() { if (fini) return; fini = true; a.onended = null; if (auFin) auFin(); }
+    function terminer() { if (fini) return; fini = true; a.onended = null; ambiance.relever(); if (auFin) auFin(); }
     try {
       a.volume = volumeSon; a.currentTime = 0; a.onended = terminer;
+      ambiance.baisser();
       var pr = a.play();
       if (pr && pr.catch) pr.catch(terminer);
     } catch (e) { terminer(); }
@@ -576,6 +596,7 @@ function mountQuiz(racine, config, options) {
   }
   function basculerSon() {
     sonActif = !sonActif;
+    ambiance.activer(sonActif);
     if (sonActif) preparerSons();
     else {
       arreterSons();
@@ -594,8 +615,23 @@ function mountQuiz(racine, config, options) {
       text: sonActif ? "Son activé" : "Son coupé", onclick: basculerSon
     });
   }
+  function boutonMusique() {
+    if (!aMusique || !sonActif) return null;
+    var v = ambiance.voulue();
+    return el("button", {
+      class: "qz-btn qz-son", type: "button", "data-musique": "1", "aria-pressed": v ? "true" : "false",
+      title: v ? "Couper la musique" : "Remettre la musique", text: v ? "Musique activée" : "Musique coupée",
+      onclick: function () {
+        ambiance.basculer();
+        rendre(false);
+        var b = racine.querySelector("[data-musique]");
+        if (b) { try { b.focus({ preventScroll: true }); } catch (e) {} }
+      }
+    });
+  }
   function demarrer(avecSon) {
     sonActif = !!avecSon;
+    ambiance.activer(sonActif);
     if (sonActif) preparerSons();
     signaler("debut", { total: n, son: sonActif });
     ouvrirQuestion(0);
@@ -846,7 +882,8 @@ function mountQuiz(racine, config, options) {
         logo("qz-logo"),
         el("span", { class: "qz-titre-court", text: meta.titre || "" }),
         chronoEl,
-        boutonSon()
+        boutonSon(),
+        boutonMusique()
       ]),
       el("div", { class: "qz-plateau" }, [
         el("div", { class: "qz-principale" }, [
@@ -882,6 +919,7 @@ function mountQuiz(racine, config, options) {
     }
     return el("div", { class: "qz-fin" }, [
       boutonSon(),
+      boutonMusique(),
       logo("qz-logo-grand"),
       el("p", { class: "qz-etiquette", text: "Partie terminée" }),
       el("h1", { class: "qz-gain-final", text: fmt(montant(etat.niveau)) }),
@@ -941,7 +979,7 @@ function mountQuiz(racine, config, options) {
   }
   rendre(!!options.autoFocus);
 
-  return { detruire: function () { arreterChrono(); arreterSons(); ecouteur.removeEventListener("keydown", touche); } };
+  return { detruire: function () { arreterChrono(); arreterSons(); ambiance.detruire(); ecouteur.removeEventListener("keydown", touche); } };
 }
 
 const PLAYER_CSS = `
@@ -1085,11 +1123,13 @@ let uidSuivant = 1;
 const uid = () => "q" + (uidSuivant++);
 
 const SLOTS_SON = [
+  { jeu: "quiz", cle: "ambiance", titre: "Musique d'ambiance", quand: "Boucle en fond pendant toute la partie, à faible volume. Le joueur peut la couper avec le bouton Musique, et elle s'efface pendant les effets sonores." },
   { jeu: "quiz", cle: "lancement", titre: "Lancement", quand: "Joué quand le joueur démarre la partie." },
   { jeu: "quiz", cle: "correct", titre: "Bonne réponse", quand: "Joué quand la réponse est juste." },
   { jeu: "quiz", cle: "faux", titre: "Mauvaise réponse", quand: "Joué quand la réponse est fausse ou que le temps est écoulé." },
   { jeu: "quiz", cle: "suspens", titre: "Suspense", quand: "Joué avant le verdict de la dernière question et des questions qui mènent à un palier de sécurité. Le joueur peut le passer, et sa durée est plafonnée par le réglage ci-dessus." },
   { jeu: "quiz", cle: "jackpot", titre: "Jackpot", quand: "Joué quand la dernière question est réussie, à la place du son Bonne réponse." },
+  { jeu: "champion", cle: "ambiance", titre: "Musique d'ambiance", quand: "Boucle en fond pendant toute la partie, à faible volume. Le joueur peut la couper avec le bouton Musique, et elle s'efface pendant les effets sonores." },
   { jeu: "champion", cle: "qp_generique", titre: "Générique", quand: "Joué au démarrage de la partie, puis coupé en fondu quand la première manche commence." },
   { jeu: "champion", cle: "qp_buzzer", titre: "Buzzer", quand: "Joué quand le joueur appuie sur « JE SAIS ! » dans Trouve avant la fin." },
   { jeu: "champion", cle: "qp_correct", titre: "Bonne réponse", quand: "Joué quand la réponse est juste." },
@@ -1157,7 +1197,7 @@ function editionExemple() {
     },
     theme: { fond: "#0E3B43", carte: "#14505B", texte: "#F4F7F5", accent: "#F5B841", police: "sans", policePerso: "", arrondi: 14, logo: null, logoHauteur: 64 },
     regles: { gainMax: 1000000, unite: "points", progression: "acceleree", securiteTousLes: 5, erreur: "descend", jokers: { moitie: 1, indice: 1, passer: 1 }, chrono: 0, melangerReponses: true },
-    sons: { actif: true, volume: 70, suspenseMax: 10, pistes: packDefaut() },
+    sons: { actif: true, volume: 70, suspenseMax: 10, ambiance: { volume: 25, baisse: 30 }, pistes: packDefaut() },
     jeu: "quiz",
     champion: reglesChampion(),
     trouve: trouvesExemple(),
@@ -1217,7 +1257,7 @@ function editionVide() {
   const e = editionExemple();
   e.meta = { titre: "Mon jeu", sousTitre: "", messageFin: "", exemple: false, id: nouvelId() };
   e.questions = [questionVide()];
-  e.sons = { actif: true, volume: 70, suspenseMax: 10, pistes: {} };
+  e.sons = { actif: true, volume: 70, suspenseMax: 10, ambiance: { volume: 25, baisse: 30 }, pistes: {} };
   e.trouve = [];
   e.jeu = "quiz";
   e.champion = reglesChampion();
@@ -1259,11 +1299,16 @@ function configPropre(seulementValides) {
   return c;
 }
 function normaliserSons(s, base) {
-  const o = Object.assign({}, base, { pistes: {} });
+  const o = Object.assign({}, base, { pistes: {}, ambiance: Object.assign({ volume: 25, baisse: 30 }, base && base.ambiance) });
   if (s && typeof s === "object") {
     if (typeof s.actif === "boolean") o.actif = s.actif;
     if (Number.isFinite(Number(s.volume))) o.volume = Math.max(0, Math.min(100, Number(s.volume)));
     if (Number.isFinite(Number(s.suspenseMax))) o.suspenseMax = Math.max(0, Number(s.suspenseMax));
+    if (s.ambiance && typeof s.ambiance === "object") {
+      const v = Number(s.ambiance.volume), b = Number(s.ambiance.baisse);
+      if (s.ambiance.volume != null && Number.isFinite(v)) o.ambiance.volume = Math.max(0, Math.min(100, v));
+      if (s.ambiance.baisse != null && Number.isFinite(b)) o.ambiance.baisse = Math.max(0, Math.min(100, b));
+    }
     SLOTS_SON.forEach(({ cle }) => {
       const p = s.pistes && s.pistes[cle];
       if (p && typeof p.src === "string" && /^data:audio\//.test(p.src)) o.pistes[cle] = { nom: String(p.nom || cle), src: p.src, duree: Number(p.duree) || null };
@@ -1377,7 +1422,7 @@ function construireExport(c) {
   if (c.sons && c.sons.actif === false) c.sons = { actif: false, pistes: {} };
   const champion = c.jeu === "champion";
   const json = JSON.stringify(c).replace(/</g, "\\u003c");
-  const code = (champion ? [fabriquerEl, appliquerTheme, creerMoteurSons, creerTableauScores, vueTableauScores, mountChampion] : [fabriquerEl, appliquerTheme, creerTableauScores, vueTableauScores, calculerEchelle, mountQuiz])
+  const code = (champion ? [fabriquerEl, appliquerTheme, creerAmbiance, creerMoteurSons, creerTableauScores, vueTableauScores, mountChampion] : [fabriquerEl, appliquerTheme, creerAmbiance, creerTableauScores, vueTableauScores, calculerEchelle, mountQuiz])
     .map((f) => f.toString()).join("\n");
   return [
     "<!DOCTYPE html>", '<html lang="fr">', "<head>", '<meta charset="utf-8">',
@@ -1475,6 +1520,7 @@ function majDerives() {
   $("champ-police-perso").hidden = t.police !== "perso";
   $("tab-scores").textContent = "Scores" + (cfg.scores.actif ? " (activés)" : "");
   $("vol-val").textContent = "(" + (Number(cfg.sons.volume) || 0) + " %)";
+  $("vol-amb-val").textContent = "(" + (Number(cfg.sons.ambiance.volume) || 0) + " %)";
   const poidsSons = slotsDuJeu().reduce((s, { cle }) => s + (cfg.sons.pistes[cle] ? cfg.sons.pistes[cle].src.length * 0.75 : 0), 0);
   $("sons-poids").textContent = poidsSons ? "Poids des sons dans le jeu exporté : " + (poidsSons / 1048576).toFixed(1).replace(".", ",") + " Mo." : "Aucun son dans ce jeu.";
   const themes = [];
@@ -2130,6 +2176,12 @@ $("fichier-son").addEventListener("change", (e) => {
   };
   r.onerror = () => toast("Ce fichier n'a pas pu être lu.");
   r.readAsDataURL(f);
+});
+$("btn-ambiance").addEventListener("click", () => {
+  const src = typeof SONS_AMBIANCE === "object" && SONS_AMBIANCE.ambiance;
+  if (!src) { toast("La musique d'exemple n'est pas incluse dans cette version de l'Atelier."); return; }
+  arreterLecteur(); cfg.sons.pistes.ambiance = Object.assign({}, src); rendreSons(); apresModif();
+  toast("Musique d'exemple ajoutée. Réglez son volume ci-dessus.");
 });
 $("btn-pack").addEventListener("click", () => {
   const p = packDefaut(cfg.jeu);

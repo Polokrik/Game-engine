@@ -71,13 +71,58 @@ function appliquerTheme(racine, theme) {
   st.setProperty("--logo-h", (Number(theme.logoHauteur) || 64) + "px");
 }
 
+/* Musique d'ambiance : boucle discrète, que le joueur peut couper, et qui s'efface pendant les effets sonores.
+   `piste` : { src }, `reglages` : { volume (0-100, 25 par défaut), baisse (0-100, 30 par défaut : % du volume conservé pendant un effet) }.
+   activer(b) suit le bouton « Son » ; basculer() est le bouton « Musique ». Rien ne démarre avant un geste du joueur. */
+function creerAmbiance(piste, reglages) {
+  reglages = reglages || {};
+  var src = piste && piste.src;
+  function pct(v, def) { v = Number(v); return Math.max(0, Math.min(100, isFinite(v) && v === v ? v : def)) / 100; }
+  var vol = pct(reglages.volume != null ? reglages.volume : 25, 25), duck = pct(reglages.baisse != null ? reglages.baisse : 30, 30);
+  var audio = null, sonOn = false, voulue = true, baisse = false, courant = 0, minuteur = null;
+  function niveau() { return vol * (baisse ? duck : 1); }
+  function viser(cible, duree) {
+    if (minuteur) { clearInterval(minuteur); minuteur = null; }
+    if (!audio) return;
+    var pas = 50, total = Math.max(1, Math.round(duree / pas)), i = 0, depart = courant;
+    minuteur = setInterval(function () {
+      i++;
+      courant = depart + (cible - depart) * Math.min(1, i / total);
+      try { audio.volume = Math.max(0, Math.min(1, courant)); } catch (e) {}
+      if (i >= total) {
+        clearInterval(minuteur); minuteur = null;
+        if (cible <= 0.001) { try { audio.pause(); } catch (e) {} }
+      }
+    }, pas);
+  }
+  function lancer() {
+    if (!src || !sonOn || !voulue) return;
+    if (!audio) { try { audio = new Audio(src); audio.loop = true; audio.preload = "auto"; } catch (e) { audio = null; return; } }
+    try {
+      if (audio.paused) { audio.volume = courant; var pr = audio.play(); if (pr && pr.catch) pr.catch(function () {}); }
+    } catch (e) {}
+    viser(niveau(), 1500);
+  }
+  function enCours() { return !!audio && !audio.paused; }
+  return {
+    disponible: !!src,
+    activer: function (b) { sonOn = !!b; if (sonOn) lancer(); else if (enCours()) viser(0, 300); },
+    basculer: function () { voulue = !voulue; if (voulue) lancer(); else if (enCours()) viser(0, 500); return voulue; },
+    voulue: function () { return voulue; },
+    baisser: function () { baisse = true; if (enCours() && sonOn && voulue) viser(niveau(), 250); },
+    relever: function () { baisse = false; if (enCours() && sonOn && voulue) viser(niveau(), 900); },
+    detruire: function () { if (minuteur) { clearInterval(minuteur); minuteur = null; } if (audio) { try { audio.pause(); } catch (e) {} } audio = null; sonOn = false; }
+  };
+}
+
 /* Moteur de sons facultatifs. `pistes` : { cle: { src: "data:audio/..." } }, `volumePct` : 0 à 100.
    Les sons ne démarrent qu'après activer(true), appelé depuis un geste du joueur. */
-function creerMoteurSons(pistes, volumePct) {
+function creerMoteurSons(pistes, volumePct, reglagesAmbiance) {
   pistes = pistes || {};
+  var ambiance = creerAmbiance(pistes.ambiance, reglagesAmbiance);
   var vol = Math.max(0, Math.min(1, (volumePct != null ? Number(volumePct) : 70) / 100));
   var audios = {}, actif = false, fondu = null;
-  var cles = Object.keys(pistes).filter(function (k) { return pistes[k] && pistes[k].src; });
+  var cles = Object.keys(pistes).filter(function (k) { return k !== "ambiance" && pistes[k] && pistes[k].src; });
 
   function preparer() {
     cles.forEach(function (k) {
@@ -92,6 +137,7 @@ function creerMoteurSons(pistes, volumePct) {
       if (!a) return;
       try { a.onended = null; a.pause(); a.currentTime = 0; a.volume = vol; } catch (e) {}
     });
+    ambiance.relever();
   }
   /* Lance une piste (en coupant les autres). `auFin` est appelé à la fin, ou tout de suite s'il n'y a rien à jouer. */
   function jouer(cle, auFin) {
@@ -99,9 +145,10 @@ function creerMoteurSons(pistes, volumePct) {
     arreter();
     if (!a) { if (auFin) auFin(); return; }
     var fini = false;
-    function terminer() { if (fini) return; fini = true; a.onended = null; if (auFin) auFin(); }
+    function terminer() { if (fini) return; fini = true; a.onended = null; ambiance.relever(); if (auFin) auFin(); }
     try {
       a.volume = vol; a.currentTime = 0; a.onended = terminer;
+      ambiance.baisser();
       var pr = a.play();
       if (pr && pr.catch) pr.catch(terminer);
     } catch (e) { terminer(); }
@@ -120,12 +167,14 @@ function creerMoteurSons(pistes, volumePct) {
   }
   return {
     disponible: cles.length > 0,
+    ambiance: ambiance,
     preparer: preparer,
-    activer: function (b) { actif = !!b; if (actif) preparer(); },
+    activer: function (b) { actif = !!b; if (actif) preparer(); ambiance.activer(actif); },
     actif: function () { return actif; },
     jouer: jouer,
     arreter: arreter,
-    estomper: estomper
+    estomper: estomper,
+    detruire: function () { arreter(); ambiance.detruire(); }
   };
 }
 

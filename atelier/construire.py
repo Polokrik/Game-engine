@@ -48,7 +48,7 @@ def sons_js():
         lignes.append("var " + var + " = " + json.dumps(out, ensure_ascii=False, separators=(",", ":")) + ";")
     return "\n".join(lignes), manquants
 
-SANS_SONS = "var SONS_DEFAUT = {};\nvar SONS_QPUC = {};"
+SANS_SONS = "var SONS_DEFAUT = {};\nvar SONS_QPUC = {};\nvar SONS_AMBIANCE = {};"
 ENTETE = ('<!doctype html>\n<html lang="fr">\n<head>\n<meta charset="utf-8">\n'
           '<meta name="viewport" content="width=device-width, initial-scale=1">\n'
           '<style>:root{color-scheme:light}html,body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>\n'

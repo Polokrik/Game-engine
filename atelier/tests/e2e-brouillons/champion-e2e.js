@@ -3,7 +3,7 @@ const fs = require('fs');
 const wrap = (b) => '<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>[hidden]{display:none!important}</style></head><body>'+b+'</body></html>';
 (async () => {
   fs.writeFileSync('page.html', wrap(fs.readFileSync('/home/user/atelier-quiz/index.html','utf8')));
-  fs.writeFileSync('page_v4.html', wrap(fs.readFileSync('../index.v4.html','utf8')));
+  fs.writeFileSync('page_v4.html', wrap(fs.readFileSync('/home/user/game-engine/atelier/atelier-jeux.html','utf8')));
   const b = await chromium.launch({ args:['--autoplay-policy=no-user-gesture-required'] });
   const ctx = await b.newContext({ viewport:{width:1400,height:1000}, acceptDownloads:true });
   await ctx.addInitScript(() => {

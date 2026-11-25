@@ -62,8 +62,9 @@ function mountChampion(racine, config, options) {
 
   /* ---------- sons ---------- */
   var sonsCfg = config.sons || {};
-  var moteur = creerMoteurSons(sonsCfg.pistes, sonsCfg.volume);
-  var aSons = sonsCfg.actif !== false && moteur.disponible;
+  var moteur = creerMoteurSons(sonsCfg.pistes, sonsCfg.volume, sonsCfg.ambiance);
+  var aSons = sonsCfg.actif !== false && (moteur.disponible || moteur.ambiance.disponible);
+  var aMusique = sonsCfg.actif !== false && moteur.ambiance.disponible;
 
   /* ---------- records et maîtrise (gardés dans le navigateur du joueur) ---------- */
   var cleStock = "qz-champion-" + (meta.id || "defaut");
@@ -108,6 +109,20 @@ function mountChampion(racine, config, options) {
   }
 
   /* ---------- éléments d'interface ---------- */
+  function boutonMusique() {
+    if (!aMusique || !moteur.actif()) return null;
+    var v = moteur.ambiance.voulue();
+    return el("button", {
+      class: "qz-btn qz-son", type: "button", "data-musique": "1", "aria-pressed": v ? "true" : "false",
+      title: v ? "Couper la musique" : "Remettre la musique", text: v ? "Musique activée" : "Musique coupée",
+      onclick: function () {
+        moteur.ambiance.basculer();
+        rendre(false);
+        var b = racine.querySelector("[data-musique]");
+        if (b) { try { b.focus({ preventScroll: true }); } catch (e) {} }
+      }
+    });
+  }
   function logo(cls) { return theme.logo ? el("img", { class: cls, src: theme.logo, alt: "" }) : null; }
   function boutonSon() {
     if (!aSons) return null;
@@ -129,7 +144,8 @@ function mountChampion(racine, config, options) {
       el("span", { class: "qz-titre-court", text: texte }),
       chronoEl,
       el("span", { class: "qc-score", text: "Score : " + Math.max(0, etat.score) }),
-      boutonSon()
+      boutonSon(),
+      boutonMusique()
     ]);
   }
   function barre(ratio) {
@@ -570,6 +586,7 @@ function mountChampion(racine, config, options) {
     }
     return el("div", { class: "qz-fin" }, [
       boutonSon(),
+      boutonMusique(),
       logo("qz-logo-grand"),
       el("p", { class: "qz-etiquette", text: "Partie terminée" }),
       el("h1", { class: "qz-gain-final", text: pluriel(f.score, "point", "points") }),
@@ -631,7 +648,7 @@ function mountChampion(racine, config, options) {
   }
   rendre(!!options.autoFocus);
 
-  return { detruire: function () { arreterChrono(); moteur.arreter(); ecouteur.removeEventListener("keydown", touche); } };
+  return { detruire: function () { arreterChrono(); moteur.detruire(); ecouteur.removeEventListener("keydown", touche); } };
 }
 
 const CHAMPION_CSS = `
